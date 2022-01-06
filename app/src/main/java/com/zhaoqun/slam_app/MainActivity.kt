@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-//        println(Build.MODEL)
+
         fsync = FileSynchronizer()
         fsync.run()
     }

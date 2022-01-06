@@ -8,6 +8,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlinx.coroutines.*
+import androidx.lifecycle.ViewModel
 
 class FileSynchronizer {
     var access_token = "121.9825db96b99baafd8f8b89c0aa6c2d6d.YmKLp7XkQAUh1BRRr5UzOkFVNr0u8Kl0Tk6UEES.19LFNQ"
@@ -34,9 +35,24 @@ class FileSynchronizer {
             }
         })*/
 
+    val io_scope = CoroutineScope(Job() + Dispatchers.IO)
+
     public fun run() {
         val phone_model: String = Build.MODEL
         var supported: Boolean = false
+
+        io_scope.launch {
+            val sync_call = netDiskAPI.getRecursiveFileList(access_token, "listall", 1, "/apps/SLAM APP")
+            val sync_res = sync_call.execute()
+            println("---sync call test----" + sync_res)
+            val res = sync_res.body()!!
+            // Do stuff with res.
+            for (f in res.list) {
+//                        if (f.server_filename.equals(phone_model))
+//                            supported = true
+                println("---sync call test---" + f.server_filename + "\n")
+            }
+        }
 
         val getSupportModels = netDiskAPI.getFileList(access_token, "list","/apps/SLAM APP")
         getSupportModels.enqueue(object : Callback<FileListResponse> {
@@ -49,11 +65,6 @@ class FileSynchronizer {
 //                            supported = true
                         println("---" + f.server_filename + "\n")
                     }
-
-
-/*                    val sync_call = netDiskAPI.getRecursiveFileList(access_token, "listall", 1, "/apps/SLAM APP")
-                    val sync_res = sync_call.execute()
-                    println("---sync call test----" + sync_res)*/
 
                 } else
                     apiErrorHandler()
