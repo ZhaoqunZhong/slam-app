@@ -1,8 +1,6 @@
 package com.zhaoqun.slam_app
 
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.view.Menu
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
@@ -47,7 +45,8 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        fsync = FileSynchronizer("${getExternalFilesDir(null).toString()}/")
+//        fsync = FileSynchronizer("${getExternalFilesDir(null).toString()}/")
+        fsync = FileSynchronizer("${filesDir}/")
         fsync.run()
     }
 

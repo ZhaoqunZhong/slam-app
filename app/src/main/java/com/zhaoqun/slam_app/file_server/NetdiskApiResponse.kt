@@ -12,3 +12,11 @@ class CloudFile {
 class FileListResponse {
     var list = ArrayList<CloudFile>()
 }
+
+class FileMeta {
+    var dlink: String = ""
+    var filename: String = ""
+}
+class FileMetasResponse {
+    var list = ArrayList<FileMeta>()
+}
