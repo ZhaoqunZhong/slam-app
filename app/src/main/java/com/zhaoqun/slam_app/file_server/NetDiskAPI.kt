@@ -37,5 +37,8 @@ interface NetDiskAPI {
     @Streaming
     @GET
     fun downloadFileWithUrl(@Url fileUrl: String): Call<ResponseBody>
+
+    @GET
+    fun refreshToken(@Url oauthUrl: String): Call<RefreshTokenResponse>
 }
 

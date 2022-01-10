@@ -15,6 +15,8 @@ import java.io.*
 class FileSynchronizer(val path: String) {
     var access_token = "121.9825db96b99baafd8f8b89c0aa6c2d6d.YmKLp7XkQAUh1BRRr5UzOkFVNr0u8Kl0Tk6UEES.19LFNQ"
     var refresh_token = "122.50b33fb54bf4c4bf9e2fbec28551591c.YlxWrZtiKLILd-RP5vuts9I9eTaQyHxFr64tCQT.Sh07bg"
+    var app_key = "6wOUKyBgQ8BSmhHV0rkt73nBHWG6Th3d"
+    var secret_key = "Gjfi3GQIFdjmuk1YWftex0dXmFCYqwE0"
 
     private val netDiskAPI by lazy {
         NetDiskAPI.create()
@@ -48,10 +50,20 @@ class FileSynchronizer(val path: String) {
 
 
     val io_scope = CoroutineScope(Job() + Dispatchers.IO)
-    public fun run() {
+    val tag = "FileSynchronizer"
+    public fun run() : Boolean {
         io_scope.launch {
             /// Refresh token if necessary.
-
+            val refresh_token_call = netDiskAPI.refreshToken("https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token" +
+                    "&refresh_token=${refresh_token}&client_id=${app_key}&client_secret=${secret_key}")
+            val token_res = refresh_token_call.execute()
+            if (token_res.code() == 200) {
+                access_token = token_res.body()!!.access_token
+                println(access_token)
+            } else {
+                Log.e(tag, "Refresh token failed!" /*+ token_res.toString()*/)
+                false
+            }
             /// Check if current phone model is supported.
             val phone_model: String = Build.MODEL
             var supported: Boolean = false
@@ -63,6 +75,9 @@ class FileSynchronizer(val path: String) {
                     if (f.server_filename.equals(phone_model))
                         supported = true
                 }
+            } else {
+                Log.e(tag, "Get supported models failed!")
+                false
             }
             if (!supported) {
                 // Hint that current phone is not supported, maybe send phone_model to server.
@@ -80,6 +95,9 @@ class FileSynchronizer(val path: String) {
                     //println("file name: ${f.server_filename}, modify time: ${f.server_mtime}")
                     server_file_list_data.add(FileEntry(f.server_filename, f.fs_id, f.server_mtime))
                 }
+            } else {
+                Log.e(tag, "Get server file list failed!")
+                false
             }
             val server_file_list_string = json.encodeToString(server_file_list_data)
 //            println(server_file_list_string)
@@ -98,7 +116,7 @@ class FileSynchronizer(val path: String) {
             syncWithServer(local_file_list_data, server_file_list_data)
             local_list_file.writeText(server_file_list_string)
         }
-
+        return true
     }
 
     private fun syncWithServer(local: MutableList<FileEntry>, server: MutableList<FileEntry>) {
@@ -138,7 +156,8 @@ class FileSynchronizer(val path: String) {
                 names.add(f.filename)
             }
         } else {
-            Log.e("downloadServerFile", file_meta_res.toString())
+            Log.e(tag, "Get file download links failed!")
+            false
         }
 //        println("links: " + links)
 
@@ -150,9 +169,10 @@ class FileSynchronizer(val path: String) {
                 if (writeResponseBodyToDisk(download_res.body()!!, fname))
                     println("Successfully downloaded file: ${fname}")
                 else
-                    Log.e("downloadServerFiles", "Download file: ${fname} failed!")
+                    Log.e(tag, "Download file: ${fname} failed!")
             } else {
-                Log.e("downloadServerFile", download_res.toString())
+                Log.e(tag, "Download file API error!")
+                false
             }
 
         }
@@ -164,7 +184,7 @@ class FileSynchronizer(val path: String) {
             var inputStream: InputStream? = null
             var outputStream: OutputStream? = null
             try {
-                val fileReader = ByteArray(4096)
+                val fileReader = ByteArray(1024*8)
                 val fileSize = body.contentLength()
                 var fileSizeDownloaded: Long = 0
                 inputStream = body.byteStream()
@@ -176,7 +196,7 @@ class FileSynchronizer(val path: String) {
                     }
                     outputStream.write(fileReader, 0, read)
                     fileSizeDownloaded += read.toLong()
-//                    Log.i("writeResponseBodyToDisk", "file download: $fileSizeDownloaded of $fileSize")
+                    Log.i("writeResponseBodyToDisk", "Download ${filename}: $fileSizeDownloaded of $fileSize")
                 }
                 outputStream.flush()
                 true

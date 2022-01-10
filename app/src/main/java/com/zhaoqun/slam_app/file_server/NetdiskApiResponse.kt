@@ -20,3 +20,7 @@ class FileMeta {
 class FileMetasResponse {
     var list = ArrayList<FileMeta>()
 }
+
+class RefreshTokenResponse {
+    var access_token: String = ""
+}
