@@ -6,13 +6,16 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import android.os.Environment
+import android.view.View
+import com.google.android.material.snackbar.Snackbar
+import com.zhaoqun.slam_app.R
 import kotlinx.serialization.Serializable
 import java.lang.Exception
 import okhttp3.ResponseBody
 import java.io.*
 
 
-class FileSynchronizer(val path: String) {
+class FileSynchronizer(val path: String, val view: View) {
     var access_token = "121.9825db96b99baafd8f8b89c0aa6c2d6d.YmKLp7XkQAUh1BRRr5UzOkFVNr0u8Kl0Tk6UEES.19LFNQ"
     var refresh_token = "122.50b33fb54bf4c4bf9e2fbec28551591c.YlxWrZtiKLILd-RP5vuts9I9eTaQyHxFr64tCQT.Sh07bg"
     var app_key = "6wOUKyBgQ8BSmhHV0rkt73nBHWG6Th3d"
@@ -53,6 +56,8 @@ class FileSynchronizer(val path: String) {
     val tag = "FileSynchronizer"
     public fun run() : Boolean {
         io_scope.launch {
+            val mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
+            mySnackbar.show()
             /// Refresh token if necessary.
             val refresh_token_call = netDiskAPI.refreshToken("https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token" +
                     "&refresh_token=${refresh_token}&client_id=${app_key}&client_secret=${secret_key}")
@@ -115,6 +120,8 @@ class FileSynchronizer(val path: String) {
             }
             syncWithServer(local_file_list_data, server_file_list_data)
             local_list_file.writeText(server_file_list_string)
+
+            mySnackbar.dismiss()
         }
         return true
     }

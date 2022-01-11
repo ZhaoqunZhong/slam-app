@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
 //        fsync = FileSynchronizer("${getExternalFilesDir(null).toString()}/")
-        fsync = FileSynchronizer("${filesDir}/")
+        fsync = FileSynchronizer("${filesDir}/", binding.root.rootView)
         fsync.run()
     }
 
