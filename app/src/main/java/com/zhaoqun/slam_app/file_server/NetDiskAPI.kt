@@ -35,10 +35,10 @@ interface NetDiskAPI {
                         @Query("fsids", encoded = true) fsids: String, @Query("dlink")dlink: Int): Call<FileMetasResponse>
 
     @Streaming
-    @GET
+    @GET    // This method is irrelevant to the baseUrl, so can be used with any internet file.
     fun downloadFileWithUrl(@Url fileUrl: String): Call<ResponseBody>
 
     @GET
-    fun refreshToken(@Url oauthUrl: String): Call<RefreshTokenResponse>
+    fun refreshToken(@Url oauthUrl: String): Call<TokenResponse>
 }
 

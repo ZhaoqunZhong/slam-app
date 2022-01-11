@@ -21,6 +21,6 @@ class FileMetasResponse {
     var list = ArrayList<FileMeta>()
 }
 
-class RefreshTokenResponse {
+class TokenResponse {
     var access_token: String = ""
 }

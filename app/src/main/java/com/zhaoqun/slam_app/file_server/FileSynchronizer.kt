@@ -1,5 +1,6 @@
 package com.zhaoqun.slam_app.file_server
 
+import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.*
@@ -16,10 +17,7 @@ import java.io.*
 
 
 class FileSynchronizer(val path: String, val view: View) {
-    var access_token = "121.9825db96b99baafd8f8b89c0aa6c2d6d.YmKLp7XkQAUh1BRRr5UzOkFVNr0u8Kl0Tk6UEES.19LFNQ"
-    var refresh_token = "122.50b33fb54bf4c4bf9e2fbec28551591c.YlxWrZtiKLILd-RP5vuts9I9eTaQyHxFr64tCQT.Sh07bg"
-    var app_key = "6wOUKyBgQ8BSmhHV0rkt73nBHWG6Th3d"
-    var secret_key = "Gjfi3GQIFdjmuk1YWftex0dXmFCYqwE0"
+    var access_token = ""
 
     private val netDiskAPI by lazy {
         NetDiskAPI.create()
@@ -51,24 +49,23 @@ class FileSynchronizer(val path: String, val view: View) {
         coerceInputValues = true
     }
 
-
     val io_scope = CoroutineScope(Job() + Dispatchers.IO)
     val tag = "FileSynchronizer"
-    public fun run() : Boolean {
+    public fun run() {
         io_scope.launch {
-            val mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
+            var mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
             mySnackbar.show()
-            /// Refresh token if necessary.
-            val refresh_token_call = netDiskAPI.refreshToken("https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token" +
-                    "&refresh_token=${refresh_token}&client_id=${app_key}&client_secret=${secret_key}")
-            val token_res = refresh_token_call.execute()
-            if (token_res.code() == 200) {
-                access_token = token_res.body()!!.access_token
-                println(access_token)
+
+            val acquire_token_call = netDiskAPI.downloadFileWithUrl("https://gitee.com/zhaoqun-zhong/slam_app_file_server/raw/master/access_token.txt")
+            val acquire_token_res = acquire_token_call.execute()
+            if (acquire_token_res.code() == 200) {
+                writeResponseBodyToDisk(acquire_token_res.body()!!, "access_token")
+                access_token = File(path + "access_token").readText()
             } else {
-                Log.e(tag, "Refresh token failed!" /*+ token_res.toString()*/)
-                false
+                Log.e(tag, "Acquire token failed!")
+                println(acquire_token_res.toString())
             }
+
             /// Check if current phone model is supported.
             val phone_model: String = Build.MODEL
             var supported: Boolean = false
@@ -82,11 +79,10 @@ class FileSynchronizer(val path: String, val view: View) {
                 }
             } else {
                 Log.e(tag, "Get supported models failed!")
-                false
             }
             if (!supported) {
                 // Hint that current phone is not supported, maybe send phone_model to server.
-
+                
             }
 
             /// Sync files.
@@ -102,7 +98,7 @@ class FileSynchronizer(val path: String, val view: View) {
                 }
             } else {
                 Log.e(tag, "Get server file list failed!")
-                false
+                println(file_list_res.toString())
             }
             val server_file_list_string = json.encodeToString(server_file_list_data)
 //            println(server_file_list_string)
@@ -122,8 +118,10 @@ class FileSynchronizer(val path: String, val view: View) {
             local_list_file.writeText(server_file_list_string)
 
             mySnackbar.dismiss()
+            mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
+            mySnackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
+            mySnackbar.show()
         }
-        return true
     }
 
     private fun syncWithServer(local: MutableList<FileEntry>, server: MutableList<FileEntry>) {
@@ -164,7 +162,7 @@ class FileSynchronizer(val path: String, val view: View) {
             }
         } else {
             Log.e(tag, "Get file download links failed!")
-            false
+            return
         }
 //        println("links: " + links)
 
@@ -179,7 +177,7 @@ class FileSynchronizer(val path: String, val view: View) {
                     Log.e(tag, "Download file: ${fname} failed!")
             } else {
                 Log.e(tag, "Download file API error!")
-                false
+                return
             }
 
         }
