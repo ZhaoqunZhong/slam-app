@@ -1,5 +1,6 @@
 package com.zhaoqun.slam_app.file_server
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
@@ -9,14 +10,14 @@ import kotlinx.serialization.json.*
 import android.os.Environment
 import android.view.View
 import com.google.android.material.snackbar.Snackbar
+import com.zhaoqun.slam_app.BuildConfig
 import com.zhaoqun.slam_app.R
 import kotlinx.serialization.Serializable
-import java.lang.Exception
 import okhttp3.ResponseBody
 import java.io.*
 
 
-class FileSynchronizer(val path: String, val view: View) {
+class FileSynchronizer(val app_path: String, val download_path: String, val view: View) {
     var access_token = ""
 
     private val netDiskAPI by lazy {
@@ -53,22 +54,27 @@ class FileSynchronizer(val path: String, val view: View) {
     val tag = "FileSynchronizer"
     public fun run() {
         io_scope.launch {
-            var mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
-            mySnackbar.show()
+            var file_snackbar : Snackbar
 
+            file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
+            file_snackbar.setBackgroundTint(Color.parseColor("#FF000000"))
+            file_snackbar.show()
+
+            //-----------------Get Baidu Netdisk access token from gitee--------------------
             val acquire_token_call = netDiskAPI.downloadFileWithUrl("https://gitee.com/zhaoqun-zhong/slam_app_file_server/raw/master/access_token.txt")
             val acquire_token_res = acquire_token_call.execute()
             if (acquire_token_res.code() == 200) {
-                writeResponseBodyToDisk(acquire_token_res.body()!!, "access_token")
-                access_token = File(path + "access_token").readText()
+                writeResponseBodyToDisk(acquire_token_res.body()!!, app_path, "access_token")
+                access_token = File(app_path + "access_token").readText()
             } else {
-                Log.e(tag, "Acquire token failed!")
-                println(acquire_token_res.toString())
+                Log.e(tag, "Acquire token failed! \n" + acquire_token_res.toString())
             }
 
-            /// Check if current phone model is supported.
+            /// Check if current phone model is supported, and get dlinks for version and apk files.
             val phone_model: String = Build.MODEL
             var supported: Boolean = false
+            var version_file_dlink = ""
+            var apk_file_dlink = ""
             val folder_list_call = netDiskAPI.getFileList(access_token, "list","/apps/SLAM APP")
             val folder_list_res = folder_list_call.execute()
             if (folder_list_res.code() == 200) {
@@ -76,6 +82,22 @@ class FileSynchronizer(val path: String, val view: View) {
                 for (f in res.list) {
                     if (f.server_filename.equals(phone_model) && f.isdir == 1u)
                         supported = true
+                    if (f.server_filename == "version_name.txt") {
+                        val version_dlink_call = netDiskAPI.getFileMetas(access_token, "filemetas", "[${f.fs_id}]", 1)
+                        val version_dlink_res = version_dlink_call.execute()
+                        if (version_dlink_res.code() == 200)
+                            version_file_dlink = version_dlink_res.body()!!.list.first().dlink
+                        else
+                            Log.e(tag, "Get version file dlink failed!")
+                    }
+                    if (f.server_filename == "slam_app.apk") {
+                        val apk_dlink_call = netDiskAPI.getFileMetas(access_token, "filemetas", "[${f.fs_id}]", 1)
+                        val apk_dlink_res = apk_dlink_call.execute()
+                        if (apk_dlink_res.code() == 200)
+                            apk_file_dlink = apk_dlink_res.body()!!.list.first().dlink
+                        else
+                            Log.e(tag, "Get apk file dlink failed!")
+                    }
                 }
             } else {
                 Log.e(tag, "Get supported models failed!")
@@ -83,6 +105,45 @@ class FileSynchronizer(val path: String, val view: View) {
             if (!supported) {
                 // Hint that current phone is not supported, maybe send phone_model to server.
                 
+            }
+
+            /// Check App version from server.
+            var version_name = ""
+            val version_name_call = netDiskAPI.downloadFileWithUrl(version_file_dlink + "&access_token=${access_token}")
+            val version_name_res = version_name_call.execute()
+            if (version_name_res.code() == 200) {
+                writeResponseBodyToDisk(version_name_res.body()!!, app_path, "version_name")
+                version_name = File(app_path + "version_name").readText()
+            } else {
+                Log.e(tag, "Acquire version name failed!")
+                println(version_name_res.toString())
+            }
+            if (version_name != BuildConfig.VERSION_NAME) {
+                file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New App version available, downloading apk for you...",
+                    Snackbar.LENGTH_INDEFINITE)
+                file_snackbar.setBackgroundTint(Color.parseColor("#FF6200EE"))
+                file_snackbar.show()
+                // Download apk from server, and save to Download folder.
+                val download_apk_call = netDiskAPI.downloadFileWithUrl(apk_file_dlink + "&access_token=${access_token}")
+                val download_apk_res = download_apk_call.execute()
+                if (download_apk_res.code() == 200) {
+                    writeResponseBodyToDisk(download_apk_res.body()!!, download_path, "slam_app.apk")
+//                    file_snackbar.dismiss()
+                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to Downloads folder.",
+                        Snackbar.LENGTH_SHORT)
+                    file_snackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
+                    file_snackbar.show()
+                } else {
+                    Log.e(tag, "Download new version apk failed!")
+                    println(download_apk_res.toString())
+//                    file_snackbar.dismiss()
+                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Download new apk file failed.",
+                        Snackbar.LENGTH_SHORT)
+                    file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
+                    file_snackbar.show()
+
+                }
+                delay(1000)
             }
 
             /// Sync files.
@@ -104,7 +165,7 @@ class FileSynchronizer(val path: String, val view: View) {
 //            println(server_file_list_string)
 
             // get local file list
-            val local_list_file = File(path + "file_list.json")
+            val local_list_file = File(app_path + "file_list.json")
             var local_file_list_data = mutableListOf<FileEntry>()
             if (local_list_file.exists()) {
                 val local_list_string = local_list_file.readText()
@@ -117,10 +178,10 @@ class FileSynchronizer(val path: String, val view: View) {
             syncWithServer(local_file_list_data, server_file_list_data)
             local_list_file.writeText(server_file_list_string)
 
-            mySnackbar.dismiss()
-            mySnackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
-            mySnackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
-            mySnackbar.show()
+//            file_snackbar.dismiss()
+            file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
+            file_snackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
+            file_snackbar.show()
         }
     }
 
@@ -137,7 +198,7 @@ class FileSynchronizer(val path: String, val view: View) {
                     println("File: ${sf.name} up to dates.")
                 } else {
                     // Delete local file and download a new one from server
-                    File(path + sf.name).delete()
+                    File(app_path + sf.name).delete()
                     files_to_download.add(sf.fs_id)
                 }
             } else {
@@ -171,7 +232,7 @@ class FileSynchronizer(val path: String, val view: View) {
             val download_res = download_call.execute()
             if (download_res.code() == 200) {
                 val fname = names[links.indexOf(lk)]
-                if (writeResponseBodyToDisk(download_res.body()!!, fname))
+                if (writeResponseBodyToDisk(download_res.body()!!, app_path, fname))
                     println("Successfully downloaded file: ${fname}")
                 else
                     Log.e(tag, "Download file: ${fname} failed!")
@@ -183,13 +244,13 @@ class FileSynchronizer(val path: String, val view: View) {
         }
     }
 
-    private fun writeResponseBodyToDisk(body: ResponseBody, filename: String): Boolean {
+    private fun writeResponseBodyToDisk(body: ResponseBody, downloadPath: String, filename: String): Boolean {
         return try {
-            val file = File(path, filename)
+            val file = File(downloadPath, filename)
             var inputStream: InputStream? = null
             var outputStream: OutputStream? = null
             try {
-                val fileReader = ByteArray(1024*8)
+                val fileReader = ByteArray(1024*4)
                 val fileSize = body.contentLength()
                 var fileSizeDownloaded: Long = 0
                 inputStream = body.byteStream()
@@ -203,15 +264,17 @@ class FileSynchronizer(val path: String, val view: View) {
                     fileSizeDownloaded += read.toLong()
                     Log.i("writeResponseBodyToDisk", "Download ${filename}: $fileSizeDownloaded of $fileSize")
                 }
-                outputStream.flush()
+//                outputStream.flush()
                 true
             } catch (e: IOException) {
+                e.printStackTrace();
                 false
             } finally {
                 inputStream?.close()
                 outputStream?.close()
             }
         } catch (e: IOException) {
+            e.printStackTrace();
             false
         }
     }
