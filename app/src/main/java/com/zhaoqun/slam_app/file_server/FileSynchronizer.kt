@@ -74,7 +74,7 @@ class FileSynchronizer(val path: String, val view: View) {
             if (folder_list_res.code() == 200) {
                 val res = folder_list_res.body()!!
                 for (f in res.list) {
-                    if (f.server_filename.equals(phone_model))
+                    if (f.server_filename.equals(phone_model) && f.isdir == 1u)
                         supported = true
                 }
             } else {
