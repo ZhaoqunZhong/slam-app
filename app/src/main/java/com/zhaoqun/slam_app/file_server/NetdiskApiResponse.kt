@@ -9,7 +9,6 @@ class CloudFile {
     var server_mtime: UInt = 0u
     var isdir: UInt = 0u
 }
-
 class FileListResponse {
     var list = ArrayList<CloudFile>()
 }
@@ -22,6 +21,8 @@ class FileMetasResponse {
     var list = ArrayList<FileMeta>()
 }
 
-class TokenResponse {
-    var access_token: String = ""
+class precreateResponse {
+    var uploadid: String = ""
+    var return_type: Int = 0
+    var block_list: String = ""
 }

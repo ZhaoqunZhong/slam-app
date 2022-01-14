@@ -15,6 +15,8 @@ import com.zhaoqun.slam_app.R
 import kotlinx.serialization.Serializable
 import okhttp3.ResponseBody
 import java.io.*
+import java.math.BigInteger
+import java.security.MessageDigest
 
 
 class FileSynchronizer(val app_path: String, val download_path: String, val view: View) {
@@ -22,6 +24,9 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
 
     private val netDiskAPI by lazy {
         NetDiskAPI.create()
+    }
+    private val netDiskUploadAPI by lazy {
+        NetDiskUploadAPI.create()
     }
 
     /// Retrofit async call template
@@ -75,7 +80,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             var supported: Boolean = false
             var version_file_dlink = ""
             var apk_file_dlink = ""
-            val folder_list_call = netDiskAPI.getFileList(access_token, "list","/apps/SLAM APP")
+            val folder_list_call = netDiskAPI.getFileList(access_token, "list","/apps/SLAM_APP")
             val folder_list_res = folder_list_call.execute()
             if (folder_list_res.code() == 200) {
                 val res = folder_list_res.body()!!
@@ -103,8 +108,58 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                 Log.e(tag, "Get supported models failed!")
             }
             if (!supported) {
-                // Hint that current phone is not supported, maybe send phone_model to server.
-                
+                // Hint that current phone is not supported.
+                file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Current phone model is not supported yet.",
+                    Snackbar.LENGTH_INDEFINITE)
+                file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
+                file_snackbar.show()
+
+                // Send phone model to server.
+                val upload_model_call = netDiskAPI.uploadCreate("create", access_token,
+                    "/apps/SLAM_APP/${phone_model}-unsupported", "0", "1", 0)
+                val upload_model_res = upload_model_call.execute()
+                if (upload_model_res.code() == 200) {
+                    Log.i(tag, "Successfully sent phone model to server.")
+                } else
+                    Log.e(tag, "Send phone model to server failed!")
+//                println(upload_model_res.toString() + "  " + upload_model_res.body()!!.string())
+
+/*
+                // Test upload file to server
+                val upload_file_call = netDiskUploadAPI.uploadFile("upload", access_token, "apps/SLAM_APP/config.yaml",
+                    File(app_path + "config.yaml").readBytes())
+                val upload_file_res = upload_file_call.execute()
+                if (upload_file_res.code() == 200) {
+                    Log.i(tag, "Upload file to server success.")
+                } else {
+                    Log.e(tag, "Upload file to server failed!")
+//                    println(upload_file_res.body()!!.string())
+                    println(upload_file_res.toString())
+                }
+
+                // Test upload precreate part
+                val file_md5 = getMD5(File(app_path + "config.yaml").readText())
+                println(file_md5)
+*//*                val pre_req = NetDiskAPI.preCreateReq("apps/SLAM_APP/config.yaml",
+                    "645", "0", 1, 0,  listOf<String>(file_md5).toString())
+                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token, pre_req)*//*
+                val file_url = java.net.URLEncoder.encode("apps/SLAM_APP/config.yaml", "utf-8")
+                println(file_url)
+                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token, file_url,
+                    "645", "0", 1, 3,  listOf<String>(file_md5).toString())
+                val upload_pre_res = upload_pre_call.execute()
+                println(upload_pre_res.toString())
+                if (upload_pre_res.code() == 200) {
+                    Log.i(tag, "upload_pre_call success.")
+                    val up_id = upload_pre_res.body()!!.uploadid
+                    val blocklist = upload_pre_res.body()!!.block_list
+                    println("upload id: ${up_id}")
+                    println("block list: ${blocklist}")
+                } else {
+                    Log.e(tag, "upload_pre_call failed!")
+                }*/
+
+                awaitCancellation()
             }
 
             /// Check App version from server.
@@ -143,13 +198,13 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                     file_snackbar.show()
 
                 }
-                delay(1000)
+                delay(2000)
             }
 
             /// Sync files.
             // get file list from server side
             var server_file_list_data = mutableListOf<FileEntry>()
-            val file_list_call = netDiskAPI.getRecursiveFileList(access_token, "listall", 1, "/apps/SLAM APP/${phone_model}")
+            val file_list_call = netDiskAPI.getRecursiveFileList(access_token, "listall", 1, "/apps/SLAM_APP/${phone_model}")
             val file_list_res = file_list_call.execute()
             if (file_list_res.code() == 200) {
                 val res = file_list_res.body()!!
@@ -278,5 +333,23 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             false
         }
     }
+
+    fun getMD5(input:String): String {
+        val md = MessageDigest.getInstance("MD5")
+        return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
+    }
+    fun md5(content: String): String {
+        val hash = MessageDigest.getInstance("MD5").digest(content.toByteArray())
+        val hex = StringBuilder(hash.size * 2)
+        for (b in hash) {
+            var str = Integer.toHexString(b.toInt())
+            if (b < 0x10) {
+                str = "0$str"
+            }
+            hex.append(str.substring(str.length -2))
+        }
+        return hex.toString()
+    }
+
 }
 
