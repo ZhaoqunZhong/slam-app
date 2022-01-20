@@ -109,7 +109,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             }
             if (!supported) {
                 // Hint that current phone is not supported.
-                file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Current phone model is not supported yet.",
+                file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "This phone model is not supported yet.",
                     Snackbar.LENGTH_INDEFINITE)
                 file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
                 file_snackbar.show()
@@ -123,7 +123,11 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                 } else
                     Log.e(tag, "Send phone model to server failed!")
 //                println(upload_model_res.toString() + "  " + upload_model_res.body()!!.string())
-
+                delay(2000)
+                file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "This phone model has been sent to server, check back later.",
+                    Snackbar.LENGTH_INDEFINITE)
+                file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
+                file_snackbar.show()
 /*
                 // Test upload file to server
                 val upload_file_call = netDiskUploadAPI.uploadFile("upload", access_token, "apps/SLAM_APP/config.yaml",
@@ -184,7 +188,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                 if (download_apk_res.code() == 200) {
                     writeResponseBodyToDisk(download_apk_res.body()!!, download_path, "slam_app.apk")
 //                    file_snackbar.dismiss()
-                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to Downloads folder.",
+                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to app's folder.",
                         Snackbar.LENGTH_SHORT)
                     file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
                     file_snackbar.show()
