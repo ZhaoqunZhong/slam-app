@@ -21,6 +21,9 @@ android {
     // For display of version in App drawer
     applicationVariants.all { variant ->
         variant.resValue "string", "app_header", "Version " + variant.versionName
+        variant.outputs.all {
+            outputFileName = "slam_app.apk"
+        }
     }
 
     buildTypes {
