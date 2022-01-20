@@ -62,7 +62,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             var file_snackbar : Snackbar
 
             file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
-            file_snackbar.setBackgroundTint(Color.parseColor("#FF000000"))
+            file_snackbar.setBackgroundTint(Color.parseColor("#FF0000FF"))
             file_snackbar.show()
 
             //-----------------Get Baidu Netdisk access token from gitee--------------------
@@ -176,7 +176,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             if (version_name != BuildConfig.VERSION_NAME) {
                 file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New App version available, downloading apk for you...",
                     Snackbar.LENGTH_INDEFINITE)
-                file_snackbar.setBackgroundTint(Color.parseColor("#FF6200EE"))
+                file_snackbar.setBackgroundTint(Color.parseColor("#FF0000FF"))
                 file_snackbar.show()
                 // Download apk from server, and save to Download folder.
                 val download_apk_call = netDiskAPI.downloadFileWithUrl(apk_file_dlink + "&access_token=${access_token}")
@@ -186,7 +186,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
 //                    file_snackbar.dismiss()
                     file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to Downloads folder.",
                         Snackbar.LENGTH_SHORT)
-                    file_snackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
+                    file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
                     file_snackbar.show()
                 } else {
                     Log.e(tag, "Download new version apk failed!")
@@ -235,7 +235,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
 
 //            file_snackbar.dismiss()
             file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
-            file_snackbar.setBackgroundTint(Color.parseColor("#FF03DAC5"))
+            file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
             file_snackbar.show()
         }
     }

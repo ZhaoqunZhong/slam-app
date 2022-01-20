@@ -18,6 +18,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // For display of version in App drawer
     applicationVariants.all { variant ->
         variant.resValue "string", "app_header", "Version " + variant.versionName
     }
