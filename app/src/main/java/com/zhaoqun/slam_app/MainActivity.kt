@@ -69,15 +69,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-/*        val download_path: File = File(getExternalFilesDir(null), "Download")
-        val apk_file = File(download_path, "slam_app.apk")
-        println("apk file: " + apk_file)
-        val apk_uri = getUriForFile(applicationContext, "com.zhaoqun.slam_app.fileprovider", apk_file)
-        println("apk uri: " + apk_uri)*/
-        val apk_path = "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/slam_app.apk"
-        Log.w("apk file : ", apk_path)
-        installApk(applicationContext, apk_path)
-
+        if (item.itemId == R.id.action_settings) {
+            val apk_path = "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/slam_app.apk"
+//        Log.w("apk file : ", apk_path)
+            installApk(applicationContext, apk_path)
+        }
         return super.onOptionsItemSelected(item)
     }
 
