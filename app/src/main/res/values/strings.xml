@@ -5,7 +5,7 @@
     <string name="nav_header_title">Version</string>
     <string name="nav_header_subtitle">zhegushao@orbbec.com</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Install update</string>
+    <string name="action_settings">Setting</string>
 
     <string name="menu_home">Data record</string>
     <string name="menu_gallery">Image processing</string>

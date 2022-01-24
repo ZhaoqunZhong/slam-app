@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        fsync = FileSynchronizer("${filesDir}/",
+        fsync = FileSynchronizer(applicationContext, "${filesDir}/",
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
     }
@@ -70,9 +70,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_settings) {
-            val apk_path = "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/slam_app.apk"
-//        Log.w("apk file : ", apk_path)
-            installApk(applicationContext, apk_path)
+/*            val apk_path = "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/slam_app.apk"
+            installApk(applicationContext, apk_path)*/
         }
         return super.onOptionsItemSelected(item)
     }
@@ -82,41 +81,6 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    /**
-     * 安装apk
-     *
-     * @param context
-     * @param apkPath
-     */
-    fun installApk(context: Context, apkPath: String?) {
-        try {
-            /**
-             * provider
-             * 处理android 7.0 及以上系统安装异常问题
-             */
-            val file = File(apkPath)
-            val install = Intent()
-            install.action = Intent.ACTION_VIEW
-            install.addCategory(Intent.CATEGORY_DEFAULT)
-            install.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val apkUri = getUriForFile(
-                    context,
-                    "com.zhaoqun.slam_app.fileprovider",
-                    file
-                ) //在AndroidManifest中的android:authorities值
-                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
-                install.setDataAndType(apkUri, "application/vnd.android.package-archive")
-            } else {
-                install.setDataAndType(
-                    Uri.fromFile(file),
-                    "application/vnd.android.package-archive"
-                )
-            }
-            context.startActivity(install)
-        } catch (e: Exception) {
-            Toast.makeText(context, "文件解析失败", Toast.LENGTH_SHORT).show()
-        }
-    }
+
 
 }

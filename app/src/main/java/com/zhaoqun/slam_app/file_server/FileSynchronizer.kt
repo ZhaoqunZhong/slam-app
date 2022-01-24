@@ -1,25 +1,30 @@
 package com.zhaoqun.slam_app.file_server
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import android.os.Environment
 import android.view.View
+import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.google.android.material.snackbar.Snackbar
 import com.zhaoqun.slam_app.BuildConfig
 import com.zhaoqun.slam_app.R
 import kotlinx.serialization.Serializable
 import okhttp3.ResponseBody
 import java.io.*
+import java.lang.Exception
 import java.math.BigInteger
 import java.security.MessageDigest
+import kotlin.coroutines.CoroutineContext
 
 
-class FileSynchronizer(val app_path: String, val download_path: String, val view: View) {
+class FileSynchronizer(val context: Context, val app_path: String, val download_path: String, val view: View) {
     var access_token = ""
 
     private val netDiskAPI by lazy {
@@ -187,11 +192,12 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                 val download_apk_res = download_apk_call.execute()
                 if (download_apk_res.code() == 200) {
                     writeResponseBodyToDisk(download_apk_res.body()!!, download_path, "slam_app.apk")
-//                    file_snackbar.dismiss()
-                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to app's folder.",
+/*                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to app's folder.",
                         Snackbar.LENGTH_SHORT)
                     file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
-                    file_snackbar.show()
+                    file_snackbar.show()*/
+                    val apk_path = "${download_path}/slam_app.apk"
+                    installApk(context, apk_path)
                 } else {
                     Log.e(tag, "Download new version apk failed!")
                     println(download_apk_res.toString())
@@ -200,9 +206,9 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
                         Snackbar.LENGTH_SHORT)
                     file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
                     file_snackbar.show()
-
+                    delay(2000)
                 }
-                delay(2000)
+
             }
 
             /// Sync files.
@@ -338,7 +344,7 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
         }
     }
 
-    fun getMD5(input:String): String {
+/*    fun getMD5(input:String): String {
         val md = MessageDigest.getInstance("MD5")
         return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
     }
@@ -353,7 +359,42 @@ class FileSynchronizer(val app_path: String, val download_path: String, val view
             hex.append(str.substring(str.length -2))
         }
         return hex.toString()
+    }*/
+    /**
+     * 安装apk
+     *
+     * @param context
+     * @param apkPath
+     */
+    fun installApk(context: Context, apkPath: String?) {
+        try {
+            /**
+             * provider
+             * 处理android 7.0 及以上系统安装异常问题
+             */
+            val file = File(apkPath)
+            val install = Intent()
+            install.action = Intent.ACTION_VIEW
+            install.addCategory(Intent.CATEGORY_DEFAULT)
+            install.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val apkUri = FileProvider.getUriForFile(
+                    context,
+                    "com.zhaoqun.slam_app.fileprovider",
+                    file
+                ) //在AndroidManifest中的android:authorities值
+                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
+                install.setDataAndType(apkUri, "application/vnd.android.package-archive")
+            } else {
+                install.setDataAndType(
+                    Uri.fromFile(file),
+                    "application/vnd.android.package-archive"
+                )
+            }
+            context.startActivity(install)
+        } catch (e: Exception) {
+            Toast.makeText(context, "文件解析失败", Toast.LENGTH_SHORT).show()
+        }
     }
-
 }
 
