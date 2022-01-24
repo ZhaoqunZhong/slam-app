@@ -1,5 +1,6 @@
 package com.zhaoqun.slam_app
 
+import android.Manifest
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.zhaoqun.slam_app.databinding.ActivityMainBinding
 import com.zhaoqun.slam_app.file_server.FileSynchronizer
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
@@ -28,6 +30,8 @@ import android.widget.Toast
 
 import android.os.Build
 import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import java.lang.Exception
 
 
@@ -60,6 +64,12 @@ class MainActivity : AppCompatActivity() {
         fsync = FileSynchronizer(applicationContext, "${filesDir}/",
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
+        if (allPermissionsGranted()) {
+
+        } else {
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -81,6 +91,18 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(
+            baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    companion object {
+        private const val REQUEST_CODE_PERMISSIONS = 666
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,
+                                                    Manifest.permission.INTERNET,
+                                                    Manifest.permission.REQUEST_INSTALL_PACKAGES)
+
+    }
 
 
 }

@@ -26,11 +26,28 @@ class DataFragment : Fragment() {
         _binding = FragmentDataBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        binding.recordButton.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) startDumpJNI() else stopDumpJNI()
+        }
         return root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    fun prepareDefaultOptions () {
+
+    }
+
+    external fun startDumpJNI()
+    external fun stopDumpJNI()
+
+    companion object {
+        // Used to load the 'native-lib' library on application startup.
+        init {
+            System.loadLibrary("native_lib")
+        }
     }
 }

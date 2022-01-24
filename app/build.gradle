@@ -16,6 +16,14 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17 -Ofast -fPIC"
+                arguments "-DANDROID_STL=c++_shared"
+                arguments "-DCMAKE_BUILD_TYPE=release"
+//                abiFilters 'arm64-v8a'
+            }
+        }
     }
 
     // For display of version in App drawer
@@ -45,6 +53,12 @@ android {
     buildToolsVersion '30.0.3'
     ndkVersion '23.1.7779620'
     compileSdkVersion 30
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.10.2'
+        }
+    }
 }
 
 dependencies {
