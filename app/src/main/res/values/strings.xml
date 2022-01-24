@@ -7,7 +7,36 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Install update</string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_home">Data record</string>
+    <string name="menu_gallery">Image processing</string>
+    <string name="menu_slideshow">SLAM</string>
+
+    <string-array name="cam_res">
+        <item >640*480</item>
+        <item >1280*720</item>
+        <item >1920*1080</item>
+    </string-array>
+
+    <string-array name="file_type">
+        <item >csv</item>
+        <item >txt</item>
+    </string-array>
+
+    <string-array name="imu_order">
+        <item >acc in front</item>
+        <item >gyr in front</item>
+    </string-array>
+
+    <string-array name="cam_id">
+        <item >0</item>
+        <item >1</item>
+        <item >2</item>
+    </string-array>
+
+    <string-array name="imu_fps">
+        <item >250</item>
+        <item >500</item>
+        <item >1000</item>
+    </string-array>
+
 </resources>

@@ -1,4 +1,4 @@
-package com.zhaoqun.slam_app.ui.slideshow
+package com.zhaoqun.slam_app.ui.data_record
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,13 +8,11 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.zhaoqun.slam_app.R
-import com.zhaoqun.slam_app.databinding.FragmentSlideshowBinding
+import com.zhaoqun.slam_app.databinding.FragmentDataBinding
 
-class SlideshowFragment : Fragment() {
+class DataFragment : Fragment() {
 
-    private lateinit var slideshowViewModel: SlideshowViewModel
-    private var _binding: FragmentSlideshowBinding? = null
+    private var _binding: FragmentDataBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -25,16 +23,9 @@ class SlideshowFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        slideshowViewModel =
-            ViewModelProvider(this).get(SlideshowViewModel::class.java)
-
-        _binding = FragmentSlideshowBinding.inflate(inflater, container, false)
+        _binding = FragmentDataBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textSlideshow
-        slideshowViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
         return root
     }
 
