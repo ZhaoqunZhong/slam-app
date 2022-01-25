@@ -37,9 +37,15 @@ class DataFragment : Fragment() {
         _binding = null
     }
 
-    fun prepareDefaultOptions () {
+/*    fun prepareDefaultOptions () {
 
     }
+    fun getBackCamIDs() : ArrayList<Int> {
+
+    }
+    fun getImuFreqs() : ArrayList<Int> {
+
+    }*/
 
     external fun startDumpJNI()
     external fun stopDumpJNI()
@@ -47,7 +53,7 @@ class DataFragment : Fragment() {
     companion object {
         // Used to load the 'native-lib' library on application startup.
         init {
-            System.loadLibrary("native_lib")
+            System.loadLibrary("data_record")
         }
     }
 }

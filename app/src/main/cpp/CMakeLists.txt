@@ -8,7 +8,9 @@ cmake_minimum_required(VERSION 3.10.2)
 
 # Declares and names the project.
 
-project("native_lib")
+project("slam_app")
+
+set(jniLibs_DIR ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -46,4 +48,13 @@ target_link_libraries( # Specifies the target library.
 
                        # Links the target library to the log library
                        # included in the NDK.
-                       ${log-lib} )
+                       ${log-lib}
+        ${jniLibs_DIR}/libopencv_java4.so)
+
+#----------------------------data record--------------------------------
+add_library(data_record SHARED
+        data_record.cpp)
+
+target_link_libraries(data_record
+        ${jniLibs_DIR}/libopencv_java4.so
+        ${jniLibs_DIR}/libglog.so)
