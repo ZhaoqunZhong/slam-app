@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.data_record.DataFragment">
+    tools:context=".ui.data_record.DataRecordFragment">
 
     <SurfaceView
         android:id="@+id/surfaceView"
@@ -25,7 +25,7 @@
         tools:layout_editor_absoluteX="1dp" />
 
     <CheckBox
-        android:id="@+id/checkBox"
+        android:id="@+id/record_cam"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Record camera"
@@ -33,13 +33,13 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <CheckBox
-        android:id="@+id/checkBox2"
+        android:id="@+id/record_imu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="Record imu"
         app:layout_constraintStart_toEndOf="@+id/divider"
-        app:layout_constraintTop_toBottomOf="@+id/imu_fps2" />
+        app:layout_constraintTop_toBottomOf="@+id/ts_format" />
 
     <TextView
         android:id="@+id/textView4"
@@ -49,7 +49,7 @@
         android:layout_marginTop="8dp"
         android:text="Imu frequency"
         app:layout_constraintStart_toEndOf="@+id/divider"
-        app:layout_constraintTop_toBottomOf="@+id/checkBox5" />
+        app:layout_constraintTop_toBottomOf="@+id/sync_acc_gyr" />
 
     <Spinner
         android:id="@+id/imu_fps"
@@ -61,29 +61,29 @@
         tools:ignore="SpeakableTextPresentCheck" />
 
     <CheckBox
-        android:id="@+id/checkBox5"
+        android:id="@+id/sync_acc_gyr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sync acc gyr"
-        app:layout_constraintStart_toStartOf="@+id/checkBox2"
-        app:layout_constraintTop_toBottomOf="@+id/checkBox2" />
+        app:layout_constraintStart_toStartOf="@+id/record_imu"
+        app:layout_constraintTop_toBottomOf="@+id/record_imu" />
 
     <CheckBox
-        android:id="@+id/checkBox4"
+        android:id="@+id/save_imgs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save images"
-        app:layout_constraintStart_toStartOf="@+id/checkBox"
-        app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+        app:layout_constraintStart_toStartOf="@+id/record_cam"
+        app:layout_constraintTop_toBottomOf="@+id/record_cam" />
 
     <CheckBox
-        android:id="@+id/checkBox3"
+        android:id="@+id/pack_rosbag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="Pack rosbag"
         app:layout_constraintStart_toEndOf="@+id/divider"
-        app:layout_constraintTop_toBottomOf="@+id/imu_fps4" />
+        app:layout_constraintTop_toBottomOf="@+id/imu_order" />
 
     <View
         android:id="@+id/divider"
@@ -122,7 +122,7 @@
         android:layout_marginTop="8dp"
         android:text="Camera ID"
         app:layout_constraintStart_toEndOf="@+id/divider"
-        app:layout_constraintTop_toBottomOf="@+id/checkBox4" />
+        app:layout_constraintTop_toBottomOf="@+id/save_imgs" />
 
     <Spinner
         android:id="@+id/cam_id"
@@ -143,7 +143,7 @@
         app:layout_constraintTop_toBottomOf="@+id/cam_resolution" />
 
     <Spinner
-        android:id="@+id/imu_fps2"
+        android:id="@+id/ts_format"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/file_type"
@@ -161,7 +161,7 @@
         app:layout_constraintTop_toBottomOf="@+id/imu_fps" />
 
     <Spinner
-        android:id="@+id/imu_fps3"
+        android:id="@+id/imu_file"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/file_type"
@@ -170,11 +170,11 @@
         tools:ignore="SpeakableTextPresentCheck" />
 
     <Spinner
-        android:id="@+id/imu_fps4"
+        android:id="@+id/imu_order"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/imu_order"
-        app:layout_constraintStart_toStartOf="@+id/imu_fps3"
+        app:layout_constraintStart_toStartOf="@+id/imu_file"
         app:layout_constraintTop_toBottomOf="@+id/textView7"
         tools:ignore="SpeakableTextPresentCheck" />
 
@@ -185,15 +185,15 @@
         android:layout_marginTop="8dp"
         android:text="Acc gyr order"
         app:layout_constraintStart_toStartOf="@+id/textView4"
-        app:layout_constraintTop_toBottomOf="@+id/imu_fps3" />
+        app:layout_constraintTop_toBottomOf="@+id/imu_file" />
 
     <CheckBox
-        android:id="@+id/checkBox6"
+        android:id="@+id/post_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="postfix with time"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTextPersonName3" />
+        app:layout_constraintTop_toBottomOf="@+id/folder_name" />
 
     <TextView
         android:id="@+id/textView9"
@@ -203,7 +203,7 @@
         android:layout_marginTop="24dp"
         android:text="Current data size"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/checkBox6" />
+        app:layout_constraintTop_toBottomOf="@+id/post_time" />
 
     <TextView
         android:id="@+id/textView10"
@@ -226,7 +226,7 @@
         app:layout_constraintTop_toBottomOf="@+id/textView9" />
 
     <EditText
-        android:id="@+id/editTextTextPersonName3"
+        android:id="@+id/folder_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"

@@ -1,6 +1,7 @@
 package com.zhaoqun.slam_app.ui.image_processing
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,5 +41,10 @@ class GalleryFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+//        Log.e("TEST", "GalleryFragment destroyed.")
     }
 }

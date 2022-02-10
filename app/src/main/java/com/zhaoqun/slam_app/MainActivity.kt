@@ -32,6 +32,9 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import com.zhaoqun.slam_app.ui.data_record.DataRecordViewModel
+import com.zhaoqun.slam_app.ui.image_processing.GalleryViewModel
 import java.lang.Exception
 
 
@@ -64,12 +67,14 @@ class MainActivity : AppCompatActivity() {
         fsync = FileSynchronizer(applicationContext, "${filesDir}/",
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
+
         if (allPermissionsGranted()) {
 
         } else {
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -101,7 +106,10 @@ class MainActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,
                                                     Manifest.permission.INTERNET,
                                                     Manifest.permission.REQUEST_INSTALL_PACKAGES)
-
+        // Used to load the 'native-lib' library on application startup.
+        init {
+            System.loadLibrary("slam_app")
+        }
     }
 
 
