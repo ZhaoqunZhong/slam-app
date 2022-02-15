@@ -5,7 +5,7 @@ project(platform)
 #add_subdirectory(rosbag)
 
 add_library(platform-lib SHARED
-        camera_utils/ndk_utils.cpp
+        ndk_camera_utils/ndk_utils.cpp
         imu_publisher.cpp
         cam_publisher.cpp
         native_debug.cpp

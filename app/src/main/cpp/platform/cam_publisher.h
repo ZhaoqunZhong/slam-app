@@ -39,6 +39,7 @@ public:
     static uint32_t rgb_width_, rgb_height_;
 
 //    void depthManualRun();
+    static std::vector<std::string> searchSlamCams();
 
 private:
     std::string searchBackCam();

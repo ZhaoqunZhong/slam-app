@@ -83,8 +83,8 @@ class DataRecordFragment : Fragment() {
         dataRecordViewModel._imu_order.observe(viewLifecycleOwner, {binding.imuOrder.setSelection(it)})
         dataRecordViewModel._pack_rosbag.observe(viewLifecycleOwner, {binding.packRosbag.isChecked = it})
 
-        var cam_ids = arrayListOf<String>("-1", "-2")
-        var imu_freqs = arrayListOf<String>("-1", "-2")
+        var cam_ids = arrayListOf<String>("-1")
+        var imu_freqs = arrayListOf<String>("0")
         @Serializable
         data class ViSensorInfo(
             val cam_ids: ArrayList<String>,
@@ -122,6 +122,10 @@ class DataRecordFragment : Fragment() {
 
     external fun getBackCamIDs() : Array<String>
     external fun getImuFreqs() : Array<String>
+    // Kotlin alternatives
+//    fun getBackCamIDs() : Array<String> { }
+//    fun getImuFreqs() : Array<String> { }
+
     external fun startDumpJNI()
     external fun stopDumpJNI()
 

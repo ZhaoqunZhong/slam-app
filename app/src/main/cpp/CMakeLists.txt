@@ -53,8 +53,17 @@ target_link_libraries( # Specifies the target library.
 
 #----------------------------data record--------------------------------
 add_library(data_record SHARED
-        data_record.cpp)
+        data_record.cpp
+        platform/cam_publisher.cpp
+        platform/ndk_camera_utils/ndk_utils.cpp)
 
-target_link_libraries(data_record
+target_link_libraries(data_record PRIVATE
+        android
+        camera2ndk
+        log
+        mediandk
         ${jniLibs_DIR}/libopencv_java4.so
         ${jniLibs_DIR}/libglog.so)
+
+target_include_directories(data_record PRIVATE
+        lib-includes)

@@ -5,6 +5,7 @@
 #include <jni.h>
 #include <vector>
 #include <string>
+#include "platform/cam_publisher.h"
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -20,7 +21,7 @@ extern "C"
 JNIEXPORT jobjectArray JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getImuFreqs(JNIEnv *env,
                                                                           jobject thiz) {
-    std::vector<std::string> imu_freqs_str{"400", "800"};
+    std::vector<std::string> imu_freqs_str{"0"};
     jobjectArray imu_freqs = env->NewObjectArray(imu_freqs_str.size(), env->FindClass(
             "java/lang/String"),env->NewStringUTF(""));
     for (int i = 0; i < imu_freqs_str.size(); i++)
@@ -31,7 +32,8 @@ extern "C"
 JNIEXPORT jobjectArray JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getBackCamIDs(JNIEnv *env,
                                                                             jobject thiz) {
-    std::vector<std::string> cams_str{"0", "1", "2"};
+    std::vector<std::string> cams_str{"-1"};
+    cams_str = CamPublisher::searchSlamCams();
     jobjectArray cams = env->NewObjectArray(cams_str.size(), env->FindClass(
             "java/lang/String"),env->NewStringUTF(""));
     for (int i = 0; i < cams_str.size(); i++)

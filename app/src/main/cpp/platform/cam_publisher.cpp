@@ -1,6 +1,6 @@
 #include "cam_publisher.h"
 #include "native_debug.h"
-#include "camera_utils/ndk_utils.h"
+#include "ndk_camera_utils/ndk_utils.h"
 #include <thread>
 #include <dirent.h>
 #include "opencv2/imgcodecs.hpp"
@@ -9,6 +9,7 @@
 #include <fstream>
 #include "Eigen/Core"
 #include <iostream>
+#include <vector>
 #include "glog/logging.h"
 
 
@@ -598,6 +599,74 @@ void CamPublisher::stop() {
 //    pthread_join(depth_capture_t, nullptr);
 #endif
     ACameraManager_delete(cameraMgr_);
+}
+
+std::vector <std::string> CamPublisher::searchSlamCams() {
+    std::vector <std::string> candidates;
+    ACameraIdList *cameraIds = nullptr;
+    ACameraManager *cam_manager = ACameraManager_create();
+    ACameraManager_getCameraIdList(cam_manager, &cameraIds);
+
+    for (int i = 0; i < cameraIds->numCameras; ++i) {
+        const char *id = cameraIds->cameraIds[i];
+
+        ACameraMetadata *metadataObj;
+        ACameraManager_getCameraCharacteristics(cam_manager, id, &metadataObj);
+        // filter logic cams
+        size_t physical_cam_nums;
+        const char *const *physical_cam_ids;
+        bool logi_cam = ACameraMetadata_isLogicalMultiCamera(metadataObj, &physical_cam_nums,
+                                                            &physical_cam_ids);
+        if (logi_cam) {
+/*            LOGW("camera id %s is logical cam with %d physical cameras", id, physical_cam_nums);
+            std::string physical_ids_string;
+            for (int i = 0; i < physical_cam_nums; i++)
+                physical_ids_string += std::string(*(physical_cam_ids + i)) + " ";
+            LOGW("Physical camera ids are %s", physical_ids_string.c_str());*/
+            continue;
+        }
+        // filter front cams
+        ACameraMetadata_const_entry lensInfo = {0};
+        ACameraMetadata_getConstEntry(metadataObj, ACAMERA_LENS_FACING, &lensInfo);
+
+        auto facing = static_cast<acamera_metadata_enum_android_lens_facing_t>(
+                lensInfo.data.u8[0]);
+
+        if (facing != ACAMERA_LENS_FACING_BACK)
+            continue;
+        // select format and resolution
+        ACameraMetadata_const_entry format_n_res = {0};
+        ACameraMetadata_getConstEntry(metadataObj,
+                                      ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &format_n_res);
+        bool yuv_640 = false, yuv_1280 = false, yuv_1920 = false;
+        for (int j = 0; j < format_n_res.count; j += 4) {
+            // We are only interested in output streams, so skip input stream
+            int32_t input = format_n_res.data.i32[j + 3];
+            if (input)
+                continue;
+
+            int32_t format = format_n_res.data.i32[j + 0];
+            int32_t width = format_n_res.data.i32[j + 1];
+            int32_t height = format_n_res.data.i32[j + 2];
+
+            if (format == AIMAGE_FORMAT_YUV_420_888 && width == 640 && height == 480)
+                yuv_640 = true;
+            if (format == AIMAGE_FORMAT_YUV_420_888 && width == 1280 && height == 720)
+                yuv_1280 = true;
+            if (format == AIMAGE_FORMAT_YUV_420_888 && width == 1920 && height == 1080)
+                yuv_1920 = true;
+        }
+        if (yuv_640 && yuv_1280 && yuv_1920)
+            candidates.emplace_back(id);
+//        printCamInfos(cameraMgr_, id);
+    }
+    ACameraManager_deleteCameraIdList(cameraIds);
+    ACameraManager_delete(cam_manager);
+    // ASSERT(candidates.size(), "didn't find rgb camera!");
+
+    std::string cam_id = candidates.front();
+    //LOGI("found rgb camera %s", cam_id.c_str());
+    return candidates;
 }
 
 /*void CamPublisher::depthManualRun() {
