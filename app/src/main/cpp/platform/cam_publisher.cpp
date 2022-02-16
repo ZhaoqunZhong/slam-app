@@ -617,14 +617,8 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
         const char *const *physical_cam_ids;
         bool logi_cam = ACameraMetadata_isLogicalMultiCamera(metadataObj, &physical_cam_nums,
                                                             &physical_cam_ids);
-        if (logi_cam) {
-/*            LOGW("camera id %s is logical cam with %d physical cameras", id, physical_cam_nums);
-            std::string physical_ids_string;
-            for (int i = 0; i < physical_cam_nums; i++)
-                physical_ids_string += std::string(*(physical_cam_ids + i)) + " ";
-            LOGW("Physical camera ids are %s", physical_ids_string.c_str());*/
+        if (logi_cam)
             continue;
-        }
         // filter front cams
         ACameraMetadata_const_entry lensInfo = {0};
         ACameraMetadata_getConstEntry(metadataObj, ACAMERA_LENS_FACING, &lensInfo);
@@ -658,14 +652,10 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
         }
         if (yuv_640 && yuv_1280 && yuv_1920)
             candidates.emplace_back(id);
-//        printCamInfos(cameraMgr_, id);
     }
     ACameraManager_deleteCameraIdList(cameraIds);
     ACameraManager_delete(cam_manager);
-    // ASSERT(candidates.size(), "didn't find rgb camera!");
 
-    std::string cam_id = candidates.front();
-    //LOGI("found rgb camera %s", cam_id.c_str());
     return candidates;
 }
 

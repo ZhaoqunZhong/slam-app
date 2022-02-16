@@ -7,7 +7,7 @@
 #include "perf_monitor.h"
 #include "native_debug.h"
 
-//#define USE_DIRECT_REPORT
+#define USE_DIRECT_REPORT
 #define ASSEMBLE_IMU
 
 struct acc_msg {
@@ -76,6 +76,7 @@ public:
 	void start();
 	void stop();
 
+	static std::vector<std::string> getAvailableImuFreqs();
 };
 
 

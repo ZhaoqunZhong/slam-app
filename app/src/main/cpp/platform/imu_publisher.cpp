@@ -64,7 +64,7 @@ void* gyroThreadWrapper(void *ptr) {
 }
 
 void ImuPublisher::init() {
- 	sensorManager_ = ASensorManager_getInstanceForPackage("com.example.orbbec_vio");
+ 	sensorManager_ = ASensorManager_getInstanceForPackage("com.zhaoqun.slam_app");
     accelerometer_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED);
     gyro_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED);
 
@@ -75,8 +75,8 @@ void ImuPublisher::init() {
 		LOGI("Supports sensor %s.", ASensor_getName(sensor_list[i]));
 	}*/
 #ifdef USE_DIRECT_REPORT
-    int acc_level = ASensor_getHighestDirectReportRateLevel(accelerometer_);
-    LOGI("acc level : %d", acc_level);
+    int report_level = ASensor_getHighestDirectReportRateLevel(accelerometer_);
+    LOGI("report level : %d", report_level);
     int acc_mode = ASensor_getReportingMode(accelerometer_);
     LOGI("acc mode : %d", acc_mode);
     bool acc_dc_hw = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER);
@@ -95,13 +95,13 @@ void ImuPublisher::init() {
     ASSERT(acc_hb_allo == 0, "acc allocate hardware buffer failed.");
     acc_channel_ = ASensorManager_createHardwareBufferDirectChannel(sensorManager_, acc_buffer_, 104);
     ASSERT(acc_channel_ > 0, "acc create direct channel failed.");
-    int acc_cf_dr = ASensorManager_configureDirectReport(sensorManager_, accelerometer_, acc_channel_, ASENSOR_DIRECT_RATE_VERY_FAST);
+    int acc_cf_dr = ASensorManager_configureDirectReport(sensorManager_, accelerometer_, acc_channel_, report_level);
     ASSERT(acc_cf_dr > 0, "acc config direct report failed.");
     int gyro_hb_allo = AHardwareBuffer_allocate(&bufferDesc, &gyro_buffer_);
     ASSERT(gyro_hb_allo == 0, "gyro allocate hardware buffer failed.");
     gyro_channel_ = ASensorManager_createHardwareBufferDirectChannel(sensorManager_, gyro_buffer_, 104);
     ASSERT(gyro_channel_ > 0, "gyro create direct channel failed.");
-    int gyro_cf_dr = ASensorManager_configureDirectReport(sensorManager_, gyro_, gyro_channel_, ASENSOR_DIRECT_RATE_VERY_FAST);
+    int gyro_cf_dr = ASensorManager_configureDirectReport(sensorManager_, gyro_, gyro_channel_, report_level);
     ASSERT(gyro_cf_dr > 0, "gyro config direct report failed.");
 #else
     // cv::FileStorage fs(app_internal_storage + "platform/S9config.yaml", cv::FileStorage::READ);
@@ -447,6 +447,16 @@ void ImuPublisher::constructImuInterpolateAcc() {
             }
             break;
     }
+}
+
+std::vector<std::string> ImuPublisher::getAvailableImuFreqs() {
+    std::vector<std::string> imu_freqs{"200", "400"};
+    ASensorManager *sensor_manager = ASensorManager_getInstanceForPackage("com.zhaoqun.slam_app");
+    const ASensor *acc = ASensorManager_getDefaultSensor(sensor_manager, ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED);
+    int report_level = ASensor_getHighestDirectReportRateLevel(acc);
+    if (report_level == ASENSOR_DIRECT_RATE_VERY_FAST)
+        imu_freqs.emplace_back("800");
+    return imu_freqs;
 }
 
 

@@ -55,7 +55,8 @@ target_link_libraries( # Specifies the target library.
 add_library(data_record SHARED
         data_record.cpp
         platform/cam_publisher.cpp
-        platform/ndk_camera_utils/ndk_utils.cpp)
+        platform/ndk_camera_utils/ndk_utils.cpp
+        platform/imu_publisher.cpp)
 
 target_link_libraries(data_record PRIVATE
         android

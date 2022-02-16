@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include "platform/cam_publisher.h"
+#include "platform/imu_publisher.h"
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -22,6 +24,7 @@ JNIEXPORT jobjectArray JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getImuFreqs(JNIEnv *env,
                                                                           jobject thiz) {
     std::vector<std::string> imu_freqs_str{"0"};
+    imu_freqs_str = ImuPublisher::getAvailableImuFreqs();
     jobjectArray imu_freqs = env->NewObjectArray(imu_freqs_str.size(), env->FindClass(
             "java/lang/String"),env->NewStringUTF(""));
     for (int i = 0; i < imu_freqs_str.size(); i++)
