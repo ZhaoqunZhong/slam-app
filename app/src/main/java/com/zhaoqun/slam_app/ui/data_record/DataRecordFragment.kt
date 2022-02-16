@@ -17,8 +17,10 @@ import com.zhaoqun.slam_app.ui.image_processing.GalleryViewModel
 import android.R.attr.data
 import android.content.Context
 import android.util.Log
+import android.widget.AdapterView
 
 import android.widget.ArrayAdapter
+import androidx.core.view.marginStart
 import com.zhaoqun.slam_app.file_server.FileSynchronizer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -44,11 +46,33 @@ class DataRecordFragment : Fragment() {
         _binding = FragmentDataBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        prepareDefaultOptions()
+
+        binding.camResolution.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+//                Log.i(debug_tag, "selected $position")
+                val lp: ViewGroup.LayoutParams = binding.camPreview.layoutParams
+                lp.width = binding.dividerVertical.marginStart
+//                Log.i(debug_tag, "surfaceview size before ${lp.width} ${lp.height}")
+                if (position == 0)
+                    lp.height = (640.0 / 480 * lp.width).toInt()
+                if (position == 1)
+                    lp.height = (1280.0 / 720 * lp.width).toInt()
+                if (position == 2)
+                    lp.height = (1920.0 / 1080 * lp.width).toInt()
+//                Log.i(debug_tag, "surfaceview size after ${lp.width} ${lp.height}")
+                binding.camPreview.layoutParams = lp
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) { }
+        }
+
         binding.recordButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) startDumpJNI() else stopDumpJNI()
         }
 
-        prepareDefaultOptions()
+/*        binding.recordCam.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) openPreview() else closePreview()
+        }*/
 
         return root
     }
@@ -129,6 +153,8 @@ class DataRecordFragment : Fragment() {
 
     external fun startDumpJNI()
     external fun stopDumpJNI()
+//    external fun openPreview()
+//    external fun closePreview()
 
     companion object {
         // Used to load the 'native-lib' library on application startup.
