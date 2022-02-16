@@ -28,4 +28,5 @@ class DataRecordViewModel : ViewModel() {
 
     val _pack_rosbag = MutableLiveData<Boolean>().apply { value = true }
 
+    val _enable_60hz = MutableLiveData<Boolean>().apply { value = true }
 }

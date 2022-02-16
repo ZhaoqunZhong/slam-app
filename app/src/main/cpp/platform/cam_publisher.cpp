@@ -612,6 +612,17 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
 
         ACameraMetadata *metadataObj;
         ACameraManager_getCameraCharacteristics(cam_manager, id, &metadataObj);
+
+/*        // check if this camera supports 60hz by AE
+        ACameraMetadata_const_entry ae_range;
+        ACameraMetadata_getConstEntry(metadataObj,
+                                      ACAMERA_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, &ae_range);
+        for (int n = 0; n < ae_range.count; n++) {
+            int32_t min = ae_range.data.i32[n + 0];
+            int32_t max = ae_range.data.i32[n + 1];
+            LOGI("AE range: min=%d vs max=%d", min, max);
+        }*/
+
         // filter logic cams
         size_t physical_cam_nums;
         const char *const *physical_cam_ids;
@@ -635,6 +646,7 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
 
         if (facing != ACAMERA_LENS_FACING_BACK)
             continue;
+
         // select format and resolution
         ACameraMetadata_const_entry format_n_res = {0};
         ACameraMetadata_getConstEntry(metadataObj,
@@ -659,6 +671,7 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
         }
         if (yuv_640 && yuv_1280 && yuv_1920)
             candidates.emplace_back(id);
+
     }
     ACameraManager_deleteCameraIdList(cameraIds);
     ACameraManager_delete(cam_manager);

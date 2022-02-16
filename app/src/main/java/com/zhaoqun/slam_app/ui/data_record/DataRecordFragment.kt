@@ -82,6 +82,7 @@ class DataRecordFragment : Fragment() {
         dataRecordViewModel._imu_format.observe(viewLifecycleOwner, {binding.imuFile.setSelection(it)})
         dataRecordViewModel._imu_order.observe(viewLifecycleOwner, {binding.imuOrder.setSelection(it)})
         dataRecordViewModel._pack_rosbag.observe(viewLifecycleOwner, {binding.packRosbag.isChecked = it})
+        dataRecordViewModel._enable_60hz.observe(viewLifecycleOwner, {binding.enable60hz.isChecked = it})
 
         var cam_ids = arrayListOf<String>("-1")
         var imu_freqs = arrayListOf<String>("0")
