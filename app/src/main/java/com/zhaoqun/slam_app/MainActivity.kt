@@ -46,6 +46,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+//        checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_PERMISSION_CODE)
+//        checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSION_CODE)
+        if (allPermissionsGranted()) {
+
+        } else {
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -67,13 +76,6 @@ class MainActivity : AppCompatActivity() {
         fsync = FileSynchronizer(applicationContext, "${filesDir}/",
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
-
-        if (allPermissionsGranted()) {
-
-        } else {
-            ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-        }
 
     }
 
@@ -97,18 +99,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(
-            baseContext, it) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
+
+/*    private fun checkPermission(permission: String, requestCode: Int) {
+        if (ContextCompat.checkSelfPermission(this@MainActivity, permission) == PackageManager.PERMISSION_DENIED) {
+            // Requesting the permission
+            ActivityCompat.requestPermissions(this@MainActivity, arrayOf(permission), requestCode)
+        } else {
+//            Toast.makeText(this@MainActivity, permission + " permission already granted", Toast.LENGTH_SHORT).show()
+        }
+    }*/
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 666
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,
-                                                    Manifest.permission.INTERNET,
-                                                    Manifest.permission.REQUEST_INSTALL_PACKAGES)
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.INTERNET,
+            Manifest.permission.CAMERA,
+            Manifest.permission.REQUEST_INSTALL_PACKAGES,
+//            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+//            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+//        private const val CAMERA_PERMISSION_CODE = 100
+//        private const val STORAGE_PERMISSION_CODE = 200
         // Used to load the 'native-lib' library on application startup.
         init {
-            System.loadLibrary("slam_app")
+//            System.loadLibrary("slam_app")
         }
     }
 

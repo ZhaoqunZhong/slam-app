@@ -3,9 +3,6 @@ package com.zhaoqun.slam_app.ui.data_record
 import android.R
 import android.R.attr
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -16,7 +13,10 @@ import com.zhaoqun.slam_app.databinding.FragmentDataBinding
 import com.zhaoqun.slam_app.ui.image_processing.GalleryViewModel
 import android.R.attr.data
 import android.content.Context
+import android.icu.text.SimpleDateFormat
+import android.os.Environment
 import android.util.Log
+import android.view.*
 import android.widget.AdapterView
 
 import android.widget.ArrayAdapter
@@ -27,6 +27,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class DataRecordFragment : Fragment() {
@@ -36,6 +38,11 @@ class DataRecordFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+    val json = Json {
+        prettyPrint = true
+        prettyPrintIndent = "  "
+        coerceInputValues = true
+    }
     private val debug_tag = "DataRecordFragment"
 
     override fun onCreateView(
@@ -66,8 +73,23 @@ class DataRecordFragment : Fragment() {
             override fun onNothingSelected(p0: AdapterView<*>?) { }
         }
 
+        binding.camPreview.holder.addCallback(
+            object : SurfaceHolder.Callback {
+                override fun surfaceCreated(holder: SurfaceHolder) { }
+                override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+//                    Log.i(debug_tag, "cam preview surfacechanged, width $width, height $height")
+                    sendSurfaceToJNI(holder.surface)
+                }
+                override fun surfaceDestroyed(holder: SurfaceHolder) { }
+            }
+        )
+
         binding.recordButton.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) startDumpJNI() else stopDumpJNI()
+            if (isChecked) {
+                val config_string = serializeRecordConfig()
+                startDumpJNI(config_string)
+            } else
+                stopDumpJNI()
         }
 
 /*        binding.recordCam.setOnCheckedChangeListener { _, isChecked ->
@@ -115,11 +137,6 @@ class DataRecordFragment : Fragment() {
             val cam_ids: ArrayList<String>,
             val imu_freqs: ArrayList<String>
         )
-        val json = Json {
-            prettyPrint = true
-            prettyPrintIndent = "  "
-            coerceInputValues = true
-        }
         val app_dir = activity?.filesDir.toString()
         val sensor_info_file = File("$app_dir/vi_sensor_info.json")
         if (sensor_info_file.exists()) {
@@ -145,16 +162,52 @@ class DataRecordFragment : Fragment() {
         binding.imuFps.setAdapter(aa1)
     }
 
+    fun serializeRecordConfig/*AndCreateDataFolder*/(): String {
+        var record_config = RecordConfig(
+            binding.folderName.text.toString(),
+            SimpleDateFormat("'-D'yyyy-MM-dd'-T'HH:mm:ss").format(Date()),
+            binding.recordCam.isChecked,
+            binding.saveImgs.isChecked,
+            binding.camId.selectedItem.toString(),
+            binding.camResolution.selectedItemPosition,
+            binding.enable60hz.isChecked,
+            binding.tsFormat.selectedItem.toString(),
+            binding.recordImu.isChecked,
+            binding.syncAccGyr.isChecked,
+            binding.imuFps.selectedItemPosition,
+            binding.imuFile.selectedItem.toString(),
+            binding.imuOrder.selectedItemPosition,
+            binding.packRosbag.isChecked
+        )
+        val record_config_string = json.encodeToString(record_config)
+//        Log.i(debug_tag, "record_config string $record_config_string")
+        return record_config_string
+
+/*        val data_folder = File("/sdcard/slam_app/RecordedData/")
+        if (!data_folder.exists())
+            data_folder.mkdir()
+
+        val cur_record_folder = File("${data_folder.path}/" + record_config.folder_name + record_config.time_postfix)
+        if (cur_record_folder.exists())
+            cur_record_folder.deleteRecursively()
+        cur_record_folder.mkdir()
+
+        val record_config_file = File("${cur_record_folder.path}/" +
+                "record_config.json")
+        record_config_file.writeText(record_config_string)*/
+    }
+
     external fun getBackCamIDs() : Array<String>
     external fun getImuFreqs() : Array<String>
     // Kotlin alternatives
 //    fun getBackCamIDs() : Array<String> { }
 //    fun getImuFreqs() : Array<String> { }
 
-    external fun startDumpJNI()
+    external fun startDumpJNI(config: String)
     external fun stopDumpJNI()
 //    external fun openPreview()
 //    external fun closePreview()
+    external fun sendSurfaceToJNI(cam_sf: Surface)
 
     companion object {
         // Used to load the 'native-lib' library on application startup.

@@ -3,6 +3,7 @@ package com.zhaoqun.slam_app.ui.data_record
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.Serializable
 
 class DataRecordViewModel : ViewModel() {
 
@@ -30,3 +31,21 @@ class DataRecordViewModel : ViewModel() {
 
     val _enable_60hz = MutableLiveData<Boolean>().apply { value = true }
 }
+
+@Serializable
+data class RecordConfig (
+    val folder_name: String,
+    val time_postfix: String,
+    val record_camera: Boolean,
+    val save_image: Boolean,
+    val camera_id: String,
+    val camera_resolution: Int,
+    val enable60hz: Boolean,
+    val image_ts_file_type: String,
+    val record_imu: Boolean,
+    val sync_acc_gyr: Boolean,
+    val imu_freq: Int,
+    val imu_file_type: String,
+    val acc_gyr_order: Int,
+    val pack_rosbag: Boolean
+)
