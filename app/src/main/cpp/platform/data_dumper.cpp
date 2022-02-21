@@ -76,9 +76,8 @@ void* imuDumpThreadRunner(void *ptr) {
     return nullptr;
 }
 
-void DataDumper::start() {
-//    dump_path_ = app_internal_storage + "dump/";
-    dump_path_ = "/sdcard/VIdata/dump/";
+void DataDumper::start(std::string path, std::string imu_file_format, std::string ts_file_format) {
+    dump_path_ = path;
     //clear last dump
     DIR *dir = opendir(dump_path_.c_str());
     if (dir) {
@@ -91,17 +90,19 @@ void DataDumper::start() {
     system((cmd + dump_path_ + "rgb_images/").c_str());
     system((cmd + dump_path_ + "rgb_images/data/").c_str());
 
-    cv::FileStorage fs("sdcard/VIdata/config.yaml", cv::FileStorage::READ);
+/*    cv::FileStorage fs("sdcard/VIdata/config.yaml", cv::FileStorage::READ);
     imu_file_format_ = static_cast<std::string>(fs["imu_file_format"]);
     image_ts_file_format_ = static_cast<std::string>(fs["ts_file_format"]);
-    fs.release();
+    fs.release();*/
+    imu_file_format_ = "." + imu_file_format;
+    image_ts_file_format_ = "." + ts_file_format;
 
     dump_open_ = true;
     pthread_create(&main_th_, nullptr, imuDumpThreadRunner, this);
 
     /// rosbag
     if (record_bag) {
-        std::string bag_name = "/sdcard/VIdata/dump/rosbag.bag";
+        std::string bag_name = dump_path_ + "rosbag.bag";
         bag_packer_.open(bag_name);
     }
 }

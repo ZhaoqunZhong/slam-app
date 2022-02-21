@@ -4,8 +4,8 @@
 
 #include <time.h>
 #include <sys/stat.h>
-#include <MessageType/sensor_msgs/CompressedImage.h>
-#include <MessageType/sensor_msgs/Image.h>
+// #include <MessageType/sensor_msgs/CompressedImage.h>
+// #include <MessageType/sensor_msgs/Image.h>
 #include "RosbagPacker.h"
 #include "native_debug.h"
 

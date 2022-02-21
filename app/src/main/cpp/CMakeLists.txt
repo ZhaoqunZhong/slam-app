@@ -10,7 +10,8 @@ project("slam_app")
 
 set(jniLibs_DIR ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
-
+#----------------------rosbag--------------------------
+#add_subdirectory(platform/rosbag)
 
 #----------------------------data record--------------------------------
 add_library(data_record SHARED
@@ -20,7 +21,9 @@ add_library(data_record SHARED
         platform/imu_publisher.cpp
         platform/image_preview.cpp
         platform/native_debug.cpp
-        platform/perf_monitor.cpp)
+        platform/perf_monitor.cpp
+        platform/data_dumper.cpp
+        platform/RosbagPacker.cpp)
 
 target_link_libraries(data_record PRIVATE
         android
@@ -29,7 +32,10 @@ target_link_libraries(data_record PRIVATE
         mediandk
         ${jniLibs_DIR}/libopencv_java4.so
         ${jniLibs_DIR}/libglog.so
+        ${jniLibs_DIR}/librosbag.so
 )
 
 target_include_directories(data_record PRIVATE
-        lib-includes)
+        lib-includes
+        platform/rosbag/include)
+

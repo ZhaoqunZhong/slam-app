@@ -8,8 +8,7 @@
 #include <queue>
 #include <jni.h>
 #include <mutex>
-#include <MessageType/geometry_msgs/Vector3Stamped.h>
-
+#include "MessageType/geometry_msgs/Vector3Stamped.h"
 #include "MessageType/sensor_msgs/Image.h"
 #include "MessageType/sensor_msgs/CompressedImage.h"
 #include "MessageType/sensor_msgs/Imu.h"

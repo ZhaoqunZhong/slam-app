@@ -12,7 +12,7 @@ class DataDumper {
 public:
     DataDumper(){};
     ~DataDumper(){};
-    void start();
+    void start(std::string path, std::string imu_file_format, std::string ts_file_format);
     void stop();
     void dumpRgbImage(rgb_msg & image);
     void dumpImuData(imu_msg & imuMsg);
