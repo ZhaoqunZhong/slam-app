@@ -22,13 +22,17 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     std::string config_string = env->GetStringUTFChars(config, nullptr);
     LOG(INFO) << "record config string " << config_string;
 
-/*    std::string root_path = "/sdcard/slam_app/RecordedData/";
-    DIR *dir = opendir(root_path.c_str());
-    if (dir) {
-    } else {
-        std::string cmd = "mkdir -m 777 -p ";
-        system((cmd + root_path).c_str());
-    }*/
+//    std::string root_path = "/sdcard/slam_app/RecordedData/";
+//    DIR *dir = opendir(root_path.c_str());
+//    if (dir) {
+//        LOG(INFO) << "vio data directory is existed";
+//    } else {
+//        LOG(INFO) << "create vio data directory";
+//        std::string cmd = "mkdir -m 777 -p ";
+//        std::string run_args = (cmd + root_path).c_str();
+//        LOG(INFO) << run_args;
+//        system(run_args.c_str());
+//    }
 /*    std::string root_path = "/sdcard/slam_app/RecordedData/";
     if(0 == access(root_path.c_str(), 0)) {
         LOG(INFO) << "root path exists.";
@@ -42,6 +46,7 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     if (std::filesystem::exists(root_path)) {
         // LOG(INFO) << "vio folder size " << std::filesystem::file_size("/sdcard/vio");
     } else {
+        LOG(INFO) << "create vio folder";
         std::filesystem::create_directories(root_path);
     }
 

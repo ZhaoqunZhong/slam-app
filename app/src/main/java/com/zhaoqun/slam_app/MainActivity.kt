@@ -29,6 +29,7 @@ import androidx.core.content.FileProvider.getUriForFile
 import android.widget.Toast
 
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -78,6 +79,11 @@ class MainActivity : AppCompatActivity() {
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
 //        Log.i("slam_app", "java path ${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)}")
+        //Android11存储
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            var intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+            startActivity(intent);
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -92,8 +98,8 @@ class MainActivity : AppCompatActivity() {
                 Log.i("permission_check", "permission:" + permissions[i] + " is granted!");
             } else {
                 Log.e("permission_check", "permission:" + permissions[i] + " is not granted!");
-                ActivityCompat.requestPermissions(
-                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+//                ActivityCompat.requestPermissions(
+//                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
             }
         }
     }
@@ -138,6 +144,7 @@ class MainActivity : AppCompatActivity() {
 //            Manifest.permission.REQUEST_INSTALL_PACKAGES,
 //            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
 //            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
