@@ -33,11 +33,10 @@ public:
         depthCallback_ = f_depth;
     };
     ~CamPublisher(){};
-    void start();
+    void start(std::string cam_id, int width, int height, bool allow60hz);
     void stop();
     static uint32_t depth_width_, depth_height_;
     static uint32_t rgb_width_, rgb_height_;
-
 //    void depthManualRun();
     static std::vector<std::string> searchSlamCams();
 
@@ -46,7 +45,6 @@ private:
     ACameraManager *cameraMgr_ = nullptr;
 
     std::string rgb_cam_id_;
-
     ACaptureSessionOutputContainer *rgb_outputContainer_ = nullptr;
     ACameraDevice *rgb_cam_ = nullptr;
     ACaptureRequest *rgb_capRequest_ = nullptr;

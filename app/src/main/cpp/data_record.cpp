@@ -11,8 +11,42 @@
 #include <android/native_window_jni.h>
 #include <dirent.h>
 #include "glog/logging.h"
+#include "platform/data_dumper.h"
 #include <sys/stat.h>
 #include <filesystem>
+
+DataDumper dataDumper;
+PerfMonitor perf_rgb, perf_acc, perf_gyr, perf_imu;
+
+void rgbCallback(rgb_msg &msg) {
+   dataDumper.dumpRgbImage(msg);
+
+   updatePreviewMat(msg.yMat, true);
+
+   perf_rgb.update();
+}
+
+void imuCallback(imu_msg &msg) {
+    dataDumper.dumpImuData(msg);
+
+    perf_imu.update();
+}
+
+void accCallback(acc_msg &msg) {
+    dataDumper.dumpAccData(msg);
+
+    perf_acc.update();
+}
+
+void gyrCallback(gyr_msg &msg) {
+    dataDumper.dumpGyroData(msg);
+
+    perf_gyr.update();
+}
+
+CamPublisher camPublisher(rgbCallback, nullptr);
+ImuPublisher imuPublisher(imuCallback, accCallback, gyrCallback);
+ImagePreviewer previewer;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -37,7 +71,6 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         if (root_folder == nullptr)
             LOG(WARNING) << "Create root path fails.";
     }*/
-
     std::filesystem::path root_path("/sdcard/slam_app/RecordedData/");
     if (std::filesystem::exists(root_path)) {
         // LOG(INFO) << "vio folder size " << std::filesystem::file_size("/sdcard/vio");
@@ -45,6 +78,10 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         std::filesystem::create_directories(root_path);
     }
 
+    // camPublisher.start();
+    // imuPublisher.start();
+    // previewer.start();
+    // dataDumper.start(root_path + );
 }
 extern "C"
 JNIEXPORT void JNICALL

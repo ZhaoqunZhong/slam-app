@@ -8,7 +8,7 @@
 #include <thread>
 
 ANativeWindow* preview_native_window = nullptr;
-int preview_w, preview_h;
+// int preview_w, preview_h;
 bool rgb_single_shot = false;
 
 void takeRgbSingleShot(rgb_msg &rgb) {
@@ -60,20 +60,20 @@ void ImagePreviewer::mainThreadFunction() {
             cvtColor(rotated_frame, mat_rgba, cv::COLOR_BGR2RGBA); //Opencv uses BGR by default.
         }
 
-        while (preview_native_window == nullptr) {
+        while (preview_native_window_ == nullptr) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         ANativeWindow_Buffer buf;
-        if (ANativeWindow_lock(preview_native_window, &buf, nullptr) < 0) {
-            LOG(WARNING) << "ANativeWindow_lock preview_native_window failed.";
+        if (ANativeWindow_lock(preview_native_window_, &buf, nullptr) < 0) {
+            LOG(WARNING) << "ANativeWindow_lock preview_native_window_ failed.";
             continue;
         } else if (buf.bits == nullptr) {
             LOG(WARNING) << "Image preview buffer is empty.";
-            ANativeWindow_unlockAndPost(preview_native_window);
+            ANativeWindow_unlockAndPost(preview_native_window_);
             continue;
-        } else if (buf.width * buf.height != preview_w * preview_h) {
+        } else if (buf.width * buf.height != preview_w_ * preview_h_) {
             LOG(WARNING) << "Image preview buffer's size is not equal to camera stream's.";
-            ANativeWindow_unlockAndPost(preview_native_window);
+            ANativeWindow_unlockAndPost(preview_native_window_);
             continue;
         }
         // LOG(INFO) << "ANativeWindow_lock buf.bits " << buf.bits << " ";
@@ -86,11 +86,16 @@ void ImagePreviewer::mainThreadFunction() {
             }
             out += buf.stride;
         }
-        ANativeWindow_unlockAndPost(preview_native_window);
+        ANativeWindow_unlockAndPost(preview_native_window_);
     }
 }
 
-void ImagePreviewer::start() {
+void ImagePreviewer::start(int width, int height, ANativeWindow* native_window) {
+    preview_h_ = height;
+    preview_w_ = width;
+    preview_native_window_ = native_window;
+    ANativeWindow_setBuffersGeometry(preview_native_window_, preview_h_, preview_w_,
+                                     WINDOW_FORMAT_RGBA_8888);
     thread_run_ = true;
     pthread_create(&main_th_, nullptr, ipThreadRunner, this);
 }
@@ -99,7 +104,7 @@ void ImagePreviewer::stop() {
     thread_run_ = false;
     pthread_cond_signal(&preview_cond);
     pthread_join(main_th_, nullptr);
-    ANativeWindow_release(preview_native_window);
+    ANativeWindow_release(preview_native_window_);
 }
 
 

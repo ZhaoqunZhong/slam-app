@@ -7,8 +7,8 @@
 #include "perf_monitor.h"
 #include "native_debug.h"
 
-#define USE_DIRECT_REPORT
-#define ASSEMBLE_IMU
+// #define USE_DIRECT_REPORT
+// #define ASSEMBLE_IMU
 
 struct acc_msg {
 	uint64_t ts;
@@ -58,6 +58,9 @@ class ImuPublisher {
 	AHardwareBuffer *gyro_buffer_;
 	int gyro_channel_;
 
+	bool use_direct_channel_ = false;
+	bool sync_acc_gyr_ = true;
+	int direct_report_level_ = 2;
 public:
 	ImuPublisher(void (*fimu) (imu_msg &), void (*facc)(acc_msg &), void (*fgyro)(gyr_msg &)) {
 		imu_callback_ = fimu;
@@ -73,7 +76,7 @@ public:
 	void runGyro();
 
 	//public interface
-	void start();
+	void start(int imu_freq, bool sync_acc_gyr);//imu_freq 0: 200hz(direct channel), 1: 400hz, 2: 800hz(direct channel)
 	void stop();
 
 	static std::vector<std::string> getAvailableImuFreqs();

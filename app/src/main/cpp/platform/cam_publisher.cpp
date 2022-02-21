@@ -476,29 +476,41 @@ ACameraCaptureSession_captureCallbacks depth_captureCallbacks{
 };
 
 
-void CamPublisher::start() {
+void CamPublisher::start(std::string cam_id, int width, int height, bool allow60hz) {
     rgbCallback = rgbCallback_;
     depthCallback = depthCallback_;
     cameraMgr_ = ACameraManager_create();
 //    searchBackCam();
-    std::string file_name = "sdcard/orbbec-vio-data/config.yaml";
+/*    std::string file_name = "sdcard/orbbec-vio-data/config.yaml";
     cv::FileStorage fs(file_name, cv::FileStorage::READ);
     rgb_width_ = static_cast<int>(fs["rgb_width"]);
-    rgb_height_ = static_cast<int>(fs["rgb_height"]);
+    rgb_height_ = static_cast<int>(fs["rgb_height"]);*/
 /*
     rgb_exposure_ = static_cast<int>(fs["rgb_exposure"]);
     rgb_sensitivity_ = static_cast<int>(fs["rgb_sensitivity"]);
     rgb_exposure_percent_ = static_cast<float>(fs["rgb_req_exposure_percent"]);
     rgb_sensitivity_percent_ = static_cast<float>(fs["rgb_req_sensitivity_percent"]);
     */
-    rgb_focus_ = static_cast<float>(fs["rgb_focus"]);
-    LOGW("rgb request focus %f", rgb_focus_);
+/*    rgb_focus_ = static_cast<float>(fs["rgb_focus"]);
+    LOGW("rgb request focus %f", rgb_focus_);*/
     // depth_width_ = static_cast<int>(fs["depth_req_width"]);
     // depth_height_ = static_cast<int>(fs["depth_req_height"]);
-    fs["rgb_cam_id"] >> rgb_cam_id_;
-    LOGW("rgb cam id : %s", rgb_cam_id_.c_str());
+/*    fs["rgb_cam_id"] >> rgb_cam_id_;
+    LOGW("rgb cam id : %s", rgb_cam_id_.c_str());*/
 
 #ifdef USE_RGB_CAM
+    rgb_cam_id_ = cam_id;
+    rgb_width_ = width;
+    rgb_height_ = height;
+    rgb_focus_ = 0.0;
+    if (allow60hz) {
+        std::vector<int32_t> range{30, 60};
+        rgb_ae_fps_range_ = range;
+    } else {
+        std::vector<int32_t> range{30, 30};
+        rgb_ae_fps_range_ = range;
+    }
+
     ACameraManager_openCamera(cameraMgr_, rgb_cam_id_.c_str(), &cameraDeviceCallbacks, &rgb_cam_);
     rgb_imgReader_ = createImageReader(rgb_width_, rgb_height_, "rgb");
     AImageReader_getWindow(rgb_imgReader_, &rgb_imageWindow_);
@@ -530,7 +542,7 @@ void CamPublisher::start() {
 /*    CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_));
     CALL_REQUEST(setEntry_i64(rgb_capRequest_, ACAMERA_SENSOR_EXPOSURE_TIME, 1, &exposure_));*/
 //    int32_t kFpsRange[2] = {30, 60};
-    fs["rgb_AE_fps_range"] >> rgb_ae_fps_range_;
+//     fs["rgb_AE_fps_range"] >> rgb_ae_fps_range_;
     CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_CONTROL_AE_TARGET_FPS_RANGE, 2,
                               rgb_ae_fps_range_.data()));
 
