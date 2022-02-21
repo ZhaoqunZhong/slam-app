@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include "glog/logging.h"
 #include <sys/stat.h>
+#include <filesystem>
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -28,19 +29,21 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         std::string cmd = "mkdir -m 777 -p ";
         system((cmd + root_path).c_str());
     }*/
-    std::string root_path = "/sdcard/slam_app/RecordedData/";
+/*    std::string root_path = "/sdcard/slam_app/RecordedData/";
     if(0 == access(root_path.c_str(), 0)) {
-
+        LOG(INFO) << "root path exists.";
     } else {
-        mkdir(root_path.c_str(), 777);
-    }
+        FILE* root_folder = std::fopen(root_path.c_str(), "w+");
+        if (root_folder == nullptr)
+            LOG(WARNING) << "Create root path fails.";
+    }*/
 
-/*    std::filesystem::path root_path("/sdcard/slam_app/RecordedData/");
+    std::filesystem::path root_path("/sdcard/slam_app/RecordedData/");
     if (std::filesystem::exists(root_path)) {
-
+        // LOG(INFO) << "vio folder size " << std::filesystem::file_size("/sdcard/vio");
     } else {
         std::filesystem::create_directories(root_path);
-    }*/
+    }
 
 }
 extern "C"
