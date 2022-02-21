@@ -80,6 +80,24 @@ class MainActivity : AppCompatActivity() {
 //        Log.i("slam_app", "java path ${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)}")
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        for (i in grantResults.indices) {
+            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                Log.i("permission_check", "permission:" + permissions[i] + " is granted!");
+            } else {
+                Log.e("permission_check", "permission:" + permissions[i] + " is not granted!");
+                ActivityCompat.requestPermissions(
+                    this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+            }
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
@@ -117,10 +135,11 @@ class MainActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.INTERNET,
             Manifest.permission.CAMERA,
-            Manifest.permission.REQUEST_INSTALL_PACKAGES,
-            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+//            Manifest.permission.REQUEST_INSTALL_PACKAGES,
+//            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
 //            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-//            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
 //        private const val CAMERA_PERMISSION_CODE = 100
 //        private const val STORAGE_PERMISSION_CODE = 200
