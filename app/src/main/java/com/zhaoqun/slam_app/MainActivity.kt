@@ -141,9 +141,7 @@ class MainActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.INTERNET,
             Manifest.permission.CAMERA,
-//            Manifest.permission.REQUEST_INSTALL_PACKAGES,
-//            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
-//            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+            Manifest.permission.REQUEST_INSTALL_PACKAGES,
             Manifest.permission.MANAGE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
