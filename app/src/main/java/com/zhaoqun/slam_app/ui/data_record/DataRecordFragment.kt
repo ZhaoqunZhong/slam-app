@@ -165,7 +165,8 @@ class DataRecordFragment : Fragment() {
     fun serializeRecordConfig/*AndCreateDataFolder*/(): String {
         var record_config = RecordConfig(
             binding.folderName.text.toString(),
-            SimpleDateFormat("'-D'yyyy-MM-dd'-T'HH:mm:ss").format(Date()),
+            binding.postTime.isChecked,
+            SimpleDateFormat("'-D'yyyy-MM-dd'-T'HH-mm-ss").format(Date()),
             binding.recordCam.isChecked,
             binding.saveImgs.isChecked,
             binding.camId.selectedItem.toString(),

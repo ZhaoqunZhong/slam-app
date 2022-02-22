@@ -35,6 +35,7 @@ class DataRecordViewModel : ViewModel() {
 @Serializable
 data class RecordConfig (
     val folder_name: String,
+    val post_with_time: Boolean,
     val time_postfix: String,
     val record_camera: Boolean,
     val save_image: Boolean,

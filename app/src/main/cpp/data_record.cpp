@@ -81,8 +81,8 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     /// Parse json string
     nlohmann::json config_j = nlohmann::json::parse(config_string);
     std::string folder_name = config_j["folder_name"];
+    bool post_with_time = config_j["post_with_time"];
     std::string time_postfix = config_j["time_postfix"];
-    std::string data_folder_name = folder_name + time_postfix;
     bool record_camera = config_j["record_camera"];
     bool save_image = config_j["save_image"];
     std::string camera_id = config_j["camera_id"];
@@ -96,14 +96,25 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     int acc_gyr_order = config_j["acc_gyr_order"];
     bool pack_rosbag = config_j["pack_rosbag"];
 
+    std::string data_folder_name = folder_name;
+    if (post_with_time || data_folder_name.empty())
+        data_folder_name += time_postfix;
+    LOG(INFO) << "data folder name " << data_folder_name;
     std::filesystem::path data_folder(root_path.string() + data_folder_name);
     if (std::filesystem::exists(data_folder))
         std::filesystem::remove_all(data_folder);
     std::filesystem::create_directories(data_folder.string() + "/rgb_images/");
 
-    std::ofstream cfs(data_folder.string() + "/record_config.json", std::ios::app);
-    cfs << config_string << std::endl;
-    cfs.close();
+    std::string record_config_file = data_folder.string() + "/record_config.json";
+    LOG(INFO) << "record config file: " << record_config_file;
+    std::ofstream cfs(record_config_file, std::ios::out);
+    if (cfs.is_open()) {
+        cfs << config_string << std::endl;
+        cfs.close();
+    } else {
+        LOG(WARNING) << "Writing record config string to data folder failed!";
+    }
+
 
     // camPublisher.start();
     // imuPublisher.start();
