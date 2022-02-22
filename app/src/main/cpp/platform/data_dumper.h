@@ -31,7 +31,7 @@ private:
     pthread_mutex_t acc_mtx_ = PTHREAD_MUTEX_INITIALIZER, gyr_mtx_ = PTHREAD_MUTEX_INITIALIZER,
     imu_mtx_ = PTHREAD_MUTEX_INITIALIZER, image_mtx_ = PTHREAD_MUTEX_INITIALIZER;
     pthread_t main_th_;
-
+    bool started_ = false;
     /// rosbag
     RosbagPacker bag_packer_;
 };

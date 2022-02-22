@@ -61,6 +61,7 @@ class ImuPublisher {
 	bool use_direct_channel_ = false;
 	bool sync_acc_gyr_ = true;
 	int direct_report_level_ = 2;
+	bool started_ = false;
 public:
 	ImuPublisher(void (*fimu) (imu_msg &), void (*facc)(acc_msg &), void (*fgyro)(gyr_msg &)) {
 		imu_callback_ = fimu;

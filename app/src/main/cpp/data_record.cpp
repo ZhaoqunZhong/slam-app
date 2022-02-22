@@ -65,14 +65,7 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         std::string cmd = "mkdir -m 777 -p ";
         system((cmd + root_path).c_str());
     }*/
-/*    std::string root_path = "/sdcard/slam_app/RecordedData/";
-    if(0 == access(root_path.c_str(), 0)) {
-        LOG(INFO) << "root path exists.";
-    } else {
-        FILE* root_folder = std::fopen(root_path.c_str(), "w+");
-        if (root_folder == nullptr)
-            LOG(WARNING) << "Create root path fails.";
-    }*/
+    // Create sdcard root folder for slam_app.
     std::filesystem::path root_path("/sdcard/slam_app/RecordedData/");
     if (std::filesystem::exists(root_path)) {
     } else {
@@ -96,6 +89,7 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     int acc_gyr_order = config_j["acc_gyr_order"];
     bool pack_rosbag = config_j["pack_rosbag"];
 
+    //Create data folder for this record.
     std::string data_folder_name = folder_name;
     if (post_with_time || data_folder_name.empty())
         data_folder_name += time_postfix;
@@ -104,7 +98,7 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     if (std::filesystem::exists(data_folder))
         std::filesystem::remove_all(data_folder);
     std::filesystem::create_directories(data_folder.string() + "/rgb_images/");
-
+    // Write config file of this record.
     std::string record_config_file = data_folder.string() + "/record_config.json";
     LOG(INFO) << "record config file: " << record_config_file;
     std::ofstream cfs(record_config_file, std::ios::out);
@@ -115,17 +109,27 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         LOG(WARNING) << "Writing record config string to data folder failed!";
     }
 
+    if (record_camera) {
+        std::map<int, std::pair<int, int>> cam_res {
+                {0, std::make_pair(640, 480)},
+                {1, std::make_pair(1280, 720)},
+                {2, std::make_pair(1920, 1080)}
+        };
+        std::pair<int,int> res = cam_res[camera_resolution];
+        camPublisher.start(camera_id, res.first, res.second, enable60hz);
+        previewer.start(res.second, res.first, preview_native_window);
+    }
 
-    // camPublisher.start();
     // imuPublisher.start();
-    // previewer.start();
+
     // dataDumper.start(root_path + );
 }
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_stopDumpJNI(JNIEnv *env,
                                                                           jobject thiz) {
-    // TODO: implement stopDumpJNI()
+    camPublisher.stop();
+    previewer.stop();
 }
 extern "C"
 JNIEXPORT jobjectArray JNICALL

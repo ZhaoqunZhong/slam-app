@@ -128,6 +128,12 @@ void ImuPublisher::init() {
 }
 
 void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
+    if (started_) {
+        LOG(WARNING) << "ImuPublisher already started, can't call start() again!";
+        return;
+    }
+    started_ = true;
+
     sync_acc_gyr_ = sync_acc_gyr;
     if (imu_freq == 0) {
         use_direct_channel_ = true;
@@ -149,6 +155,11 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
 }
 
 void ImuPublisher::stop() {
+    if (!started_) {
+        LOG(WARNING) << "ImuPublisher hasn't started yet, can't call stop().";
+        return;
+    }
+    started_ = false;
 	imu_publish_on_ = false;
     if(use_direct_channel_) {
         pthread_join(acc_thread_, nullptr);

@@ -477,6 +477,11 @@ ACameraCaptureSession_captureCallbacks depth_captureCallbacks{
 
 
 void CamPublisher::start(std::string cam_id, int width, int height, bool allow60hz) {
+    if (started_) {
+        LOG(WARNING) << "CamPublisher already started, can't call start() again!";
+        return;
+    }
+    started_ = true;
     rgbCallback = rgbCallback_;
     depthCallback = depthCallback_;
     cameraMgr_ = ACameraManager_create();
@@ -591,6 +596,11 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
 
 
 void CamPublisher::stop() {
+    if (!started_) {
+        LOG(WARNING) << "CamPublisher hasn't started yet, can't call stop().";
+        return;
+    }
+    started_ = false;
 #ifdef USE_RGB_CAM
     ACaptureRequest_free(rgb_capRequest_);
     ACameraOutputTarget_free(rgb_outputTarget_);

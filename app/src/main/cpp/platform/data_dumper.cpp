@@ -78,6 +78,11 @@ void* DumpThreadRunner(void *ptr) {
 }
 
 void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file_format, std::string ts_file_format) {
+    if (started_) {
+        LOG(WARNING) << "DataDumper already started, can't call start() again!";
+        return;
+    }
+    started_ = true;
     dump_path_ = path;
     acc_gyr_order_ = acc_gyr_order;
     //clear last dump
@@ -110,6 +115,11 @@ void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file
 }
 
 void DataDumper::stop() {
+    if (!started_) {
+        LOG(WARNING) << "DataDumper hasn't started yet, can't call stop().";
+        return;
+    }
+    started_ = false;
     dump_open_ = false;
     pthread_join(main_th_, nullptr);
 

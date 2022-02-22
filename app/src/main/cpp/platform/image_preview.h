@@ -21,6 +21,7 @@ public:
 private:
     ANativeWindow* preview_native_window_ = nullptr;
     int preview_w_, preview_h_;
+    bool started_ = false;
 };
 
 #endif //VINSONANDROID_PREVIEWER_H

@@ -61,7 +61,7 @@ void ImagePreviewer::mainThreadFunction() {
         }
 
         while (preview_native_window_ == nullptr) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         ANativeWindow_Buffer buf;
         if (ANativeWindow_lock(preview_native_window_, &buf, nullptr) < 0) {
@@ -91,16 +91,26 @@ void ImagePreviewer::mainThreadFunction() {
 }
 
 void ImagePreviewer::start(int width, int height, ANativeWindow* native_window) {
+    if (started_) {
+        LOG(WARNING) << "ImagePreviewer already started, can't call start() again!";
+        return;
+    }
+    started_ = true;
     preview_h_ = height;
     preview_w_ = width;
     preview_native_window_ = native_window;
-    ANativeWindow_setBuffersGeometry(preview_native_window_, preview_h_, preview_w_,
+    ANativeWindow_setBuffersGeometry(preview_native_window_, preview_w_, preview_h_,
                                      WINDOW_FORMAT_RGBA_8888);
     thread_run_ = true;
     pthread_create(&main_th_, nullptr, ipThreadRunner, this);
 }
 
 void ImagePreviewer::stop() {
+    if (!started_) {
+        LOG(WARNING) << "ImagePreviewer hasn't started yet, can't call stop().";
+        return;
+    }
+    started_ = false;
     thread_run_ = false;
     pthread_cond_signal(&preview_cond);
     pthread_join(main_th_, nullptr);

@@ -43,6 +43,7 @@ public:
 private:
     std::string searchBackCam();
     ACameraManager *cameraMgr_ = nullptr;
+    bool started_ = false;
 
     std::string rgb_cam_id_;
     ACaptureSessionOutputContainer *rgb_outputContainer_ = nullptr;
