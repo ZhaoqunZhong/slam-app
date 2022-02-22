@@ -91,10 +91,6 @@ void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file
     system((cmd + dump_path_).c_str());
     system((cmd + dump_path_ + "rgb_images/").c_str());
     system((cmd + dump_path_ + "rgb_images/data/").c_str());*/
-    std::filesystem::path data_folder(dump_path_);
-    if (std::filesystem::exists(data_folder))
-        std::filesystem::remove_all(data_folder);
-    std::filesystem::create_directories(dump_path_ + "rgb_images/");
 
 /*    cv::FileStorage fs("sdcard/VIdata/config.yaml", cv::FileStorage::READ);
     imu_file_format_ = static_cast<std::string>(fs["imu_file_format"]);

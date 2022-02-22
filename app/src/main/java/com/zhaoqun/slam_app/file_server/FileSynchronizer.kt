@@ -30,9 +30,9 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
     private val netDiskAPI by lazy {
         NetDiskAPI.create()
     }
-    private val netDiskUploadAPI by lazy {
+/*    private val netDiskUploadAPI by lazy {
         NetDiskUploadAPI.create()
-    }
+    }*/
 
     /// Retrofit async call template
     /*        call.enqueue(object : Callback< > {

@@ -14,6 +14,8 @@
 #include "platform/data_dumper.h"
 #include <sys/stat.h>
 #include <filesystem>
+#include <fstream>
+#include "nlohmann/json.hpp"
 
 DataDumper dataDumper;
 PerfMonitor perf_rgb, perf_acc, perf_gyr, perf_imu;
@@ -76,6 +78,32 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     } else {
         std::filesystem::create_directories(root_path);
     }
+    /// Parse json string
+    nlohmann::json config_j = nlohmann::json::parse(config_string);
+    std::string folder_name = config_j["folder_name"];
+    std::string time_postfix = config_j["time_postfix"];
+    std::string data_folder_name = folder_name + time_postfix;
+    bool record_camera = config_j["record_camera"];
+    bool save_image = config_j["save_image"];
+    std::string camera_id = config_j["camera_id"];
+    int camera_resolution = config_j["camera_resolution"];
+    bool enable60hz = config_j["enable60hz"];
+    std::string image_ts_file_type = config_j["image_ts_file_type"];
+    bool record_imu = config_j["record_imu"];
+    bool sync_acc_gyr = config_j["sync_acc_gyr"];
+    int imu_freq = config_j["imu_freq"];
+    std::string imu_file_type = config_j["imu_file_type"];
+    int acc_gyr_order = config_j["acc_gyr_order"];
+    bool pack_rosbag = config_j["pack_rosbag"];
+
+    std::filesystem::path data_folder(root_path.string() + data_folder_name);
+    if (std::filesystem::exists(data_folder))
+        std::filesystem::remove_all(data_folder);
+    std::filesystem::create_directories(data_folder.string() + "/rgb_images/");
+
+    std::ofstream cfs(data_folder.string() + "/record_config.json", std::ios::app);
+    cfs << config_string << std::endl;
+    cfs.close();
 
     // camPublisher.start();
     // imuPublisher.start();
