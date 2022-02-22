@@ -73,7 +73,6 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     }*/
     std::filesystem::path root_path("/sdcard/slam_app/RecordedData/");
     if (std::filesystem::exists(root_path)) {
-        // LOG(INFO) << "vio folder size " << std::filesystem::file_size("/sdcard/vio");
     } else {
         std::filesystem::create_directories(root_path);
     }
