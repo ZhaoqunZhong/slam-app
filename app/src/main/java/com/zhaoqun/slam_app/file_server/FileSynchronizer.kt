@@ -102,6 +102,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
             println("###########")
             val remote_path = "/apps/slam_app/1.txt"
             var file = File(app_path + "1.txt")
+            var file2 = File(app_path + "1.yaml")
             val file_size = file.totalSpace.toInt()
             val file_md5 = getMD5(file.readText())
             val md_list = buildJsonArray {
@@ -127,17 +128,28 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                 val mediaType = MediaType.parse("text/plain")
                 var requestBody = RequestBody.create(mediaType, file)
                 val singlepart = MultipartBody.Part.createFormData("file", file.name, requestBody)
-                val upload_call = netDiskUploadAPI.upload("upload", access_token_test, remote_path, "tmpfile", up_id, 0, singlepart)
+                val upload_call = netDiskUploadAPI.uploadBySlice("upload", access_token_test, remote_path, "tmpfile", singlepart)
                 val upload_pre = upload_call.execute()
+
+                var requestBody2 = RequestBody.create(mediaType, file2)
+                val singlepart2 = MultipartBody.Part.createFormData("file", file2.name, requestBody2)
+                val upload_call2 = netDiskUploadAPI.uploadBySlice("upload", access_token_test, remote_path, "tmpfile", singlepart)
+                val upload_pre2 = upload_call2.execute()
                 if (upload_pre.code() == 200) {
                     Log.i(tag, "upload_call success.")
                     val md5 = upload_pre.body()!!.md5
-                    println("md5: ${md5}")
+                    println("md5: ${upload_pre.body()!!.md5}")
+                    println("md5: ${upload_pre2.body()!!.md5}")
                     val slice_md5_list = buildJsonArray {
-                        add(md5)
+                        add(upload_pre.body()!!.md5)
+                        add(upload_pre2.body()!!.md5)
                     }
                     println(slice_md5_list.toString())
-                    val upload_create_call = netDiskAPI.uploadCreateBySlice("createsuperfile", access_token_test, remote_path, file_size.toString(), "0", 3, up_id, slice_md5_list.toString())
+                    val param = buildJsonObject {
+                        put("block_list", slice_md5_list)
+                    }
+                    println(param.toString())
+                    val upload_create_call = netDiskUploadAPI.uploadSuperFile("createsuperfile", access_token_test, remote_path, param.toString())
                     val upload_create_pre = upload_create_call.execute()
                     if (upload_create_pre.code() == 200) {
                         Log.e(tag, "upload_create_call failed!")

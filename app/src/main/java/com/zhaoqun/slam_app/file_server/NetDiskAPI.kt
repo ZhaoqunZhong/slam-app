@@ -128,9 +128,18 @@ interface NetDiskUploadAPI {
                @Query("path") path: String, @Query("type") type: String, @Query("uploadid") uploadid: String,
                @Query("partseq") partseq: Int, @Part body: MultipartBody.Part): Call<uploadResponse>
 
-
     @Multipart
     @POST("file?")
     fun uploadFile(@Query("method")method: String, @Query("access_token") access_token: String,
                @Query("path") path: String, @Part body: MultipartBody.Part): Call<ResponseBody>
+
+    @Multipart
+    @POST("file?")
+    fun uploadBySlice(@Query("method")method: String, @Query("access_token") access_token: String,
+                   @Query("path") path: String, @Query("type") type: String, @Part body: MultipartBody.Part): Call<uploadResponse>
+
+    @FormUrlEncoded
+    @POST("file?")
+    fun uploadSuperFile(@Query("method")method: String, @Query("access_token") access_token: String,
+                      @Field("path") path: String, @Field("param") param: String): Call<ResponseBody>
 }
