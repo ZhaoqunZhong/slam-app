@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         fsync = FileSynchronizer(applicationContext, "${filesDir}/",
             "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
         fsync.run()
-//        Log.i("slam_app", "java path ${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)}")
+        //Log.i("slam_app", "java path ${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)}")
         //Android11存储
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             var intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);

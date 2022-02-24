@@ -16,12 +16,19 @@ import com.google.android.material.snackbar.Snackbar
 import com.zhaoqun.slam_app.BuildConfig
 import com.zhaoqun.slam_app.R
 import kotlinx.serialization.Serializable
+import okhttp3.MediaType
 import okhttp3.ResponseBody
 import java.io.*
 import java.lang.Exception
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.coroutines.CoroutineContext
+import okhttp3.MultipartBody
+
+import okhttp3.RequestBody
+
+
+
 
 
 class FileSynchronizer(val context: Context, val app_path: String, val download_path: String, val view: View) {
@@ -70,6 +77,82 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
             file_snackbar.setBackgroundTint(Color.parseColor("#FF0000FF"))
             file_snackbar.show()
 
+
+            var access_token_test = "121.cb14cd8cd4f3d5f2b008c0e4d53fd37f.YsTP6KKIT-yy2fnuplolwMhMobQooPNzmvLYcgA.vmztwg"
+//            var file = File(app_path + "AR+GPS+Location.unitypackage");
+//            //声明请求体的类型为文件表单类型
+//            //声明请求体的类型为文件表单类型
+//            val mediaType = MediaType.parse("text/plain")
+//            //通过静态方法创建请求体
+//            //file为要上传的文件，mediaType为上一步中 声明的请求体类型
+//            //通过静态方法创建请求体
+//            //file为要上传的文件，mediaType为上一步中 声明的请求体类型
+//            var requestBody = RequestBody.create(mediaType, file)
+//            //创建文件表单的请求体，把文件请求体、文本参数放入表单中
+//            //创建文件表单的请求体，把文件请求体、文本参数放入表单中
+//            val multipartBody = MultipartBody.Builder()
+//                .addFormDataPart("file", file.name, requestBody)
+//                .build()
+//            val singlepart = MultipartBody.Part.createFormData("file", file.name, requestBody)
+//            val upload_call = netDiskUploadAPI.upload(access_token_test, "/apps/slam_app/AR+GPS+Location.unitypackage", singlepart)
+//            val upload_res = upload_call.execute()
+//            println("111111111:"+multipartBody)
+//            println("###########")
+
+            println("###########")
+            val remote_path = "/apps/slam_app/1.txt"
+            var file = File(app_path + "1.txt")
+            val file_size = file.totalSpace.toInt()
+            val file_md5 = getMD5(file.readText())
+            val md_list = buildJsonArray {
+                add(file_md5)
+            }
+            println(md_list.toString())
+            val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token_test, remote_path,
+                file_size, 0, 1, 3,  md_list.toString())
+            val upload_pre_res = upload_pre_call.execute()
+            if (upload_pre_res.code() == 200) {
+                Log.i(tag, "upload_pre_call success.")
+                val up_id = upload_pre_res.body()!!.uploadid
+                val block_list = upload_pre_res.body()!!.block_list
+                val part_seq = 0;
+                if (block_list.count() > 0) {
+                    for (part_seq_temp in block_list) {
+                        println("upload id: ${part_seq_temp}")
+                    }
+                } else {
+                    println("upload id: ${part_seq}")
+                }
+                println("upload id: ${up_id}")
+                val mediaType = MediaType.parse("text/plain")
+                var requestBody = RequestBody.create(mediaType, file)
+                val singlepart = MultipartBody.Part.createFormData("file", file.name, requestBody)
+                val upload_call = netDiskUploadAPI.upload("upload", access_token_test, remote_path, "tmpfile", up_id, 0, singlepart)
+                val upload_pre = upload_call.execute()
+                if (upload_pre.code() == 200) {
+                    Log.i(tag, "upload_call success.")
+                    val md5 = upload_pre.body()!!.md5
+                    println("md5: ${md5}")
+                    val slice_md5_list = buildJsonArray {
+                        add(md5)
+                    }
+                    println(slice_md5_list.toString())
+                    val upload_create_call = netDiskAPI.uploadCreateBySlice("createsuperfile", access_token_test, remote_path, file_size.toString(), "0", 3, up_id, slice_md5_list.toString())
+                    val upload_create_pre = upload_create_call.execute()
+                    if (upload_create_pre.code() == 200) {
+                        Log.e(tag, "upload_create_call failed!")
+                    } else {
+                        Log.e(tag, "upload_create_call failed!")
+                    }
+                } else {
+                    Log.e(tag, "upload_call failed!")
+                }
+            } else {
+                Log.e(tag, "upload_pre_call failed!")
+            }
+            println("###########")
+
+            /*
             //-----------------Get Baidu Netdisk access token from gitee--------------------
             val acquire_token_call = netDiskAPI.downloadFileWithUrl("https://gitee.com/zhaoqun-zhong/slam_app_file_server/raw/master/access_token.txt")
             val acquire_token_res = acquire_token_call.execute()
@@ -112,7 +195,11 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
             } else {
                 Log.e(tag, "Get supported models failed!")
             }
+            Log.e(tag, "Get supported models failed!")
+
+            // Test upload precreate part
             if (!supported) {
+                Log.e(tag, "Get supported models failed!")
                 // Hint that current phone is not supported.
                 file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "This phone model is not supported yet.",
                     Snackbar.LENGTH_INDEFINITE)
@@ -133,40 +220,44 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                     Snackbar.LENGTH_INDEFINITE)
                 file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
                 file_snackbar.show()
-/*
+
                 // Test upload file to server
-                val upload_file_call = netDiskUploadAPI.uploadFile("upload", access_token, "apps/SLAM_APP/config.yaml",
-                    File(app_path + "config.yaml").readBytes())
-                val upload_file_res = upload_file_call.execute()
-                if (upload_file_res.code() == 200) {
-                    Log.i(tag, "Upload file to server success.")
-                } else {
-                    Log.e(tag, "Upload file to server failed!")
-//                    println(upload_file_res.body()!!.string())
-                    println(upload_file_res.toString())
-                }
+//                val upload_file_call = netDiskUploadAPI.uploadFile("upload", access_token, "apps/SLAM_APP/config.yaml",
+//                    File(app_path + "config.yaml").readBytes())
+//                val upload_file_res = upload_file_call.execute()
+//                if (upload_file_res.code() == 200) {
+//                    Log.i(tag, "Upload file to server success.")
+//                } else {
+//                    Log.e(tag, "Upload file to server failed!")
+////                    println(upload_file_res.body()!!.string())
+//                    println(upload_file_res.toString())
+//                }
 
                 // Test upload precreate part
-                val file_md5 = getMD5(File(app_path + "config.yaml").readText())
-                println(file_md5)
-*//*                val pre_req = NetDiskAPI.preCreateReq("apps/SLAM_APP/config.yaml",
-                    "645", "0", 1, 0,  listOf<String>(file_md5).toString())
-                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token, pre_req)*//*
-                val file_url = java.net.URLEncoder.encode("apps/SLAM_APP/config.yaml", "utf-8")
-                println(file_url)
-                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token, file_url,
-                    "645", "0", 1, 3,  listOf<String>(file_md5).toString())
-                val upload_pre_res = upload_pre_call.execute()
-                println(upload_pre_res.toString())
-                if (upload_pre_res.code() == 200) {
-                    Log.i(tag, "upload_pre_call success.")
-                    val up_id = upload_pre_res.body()!!.uploadid
-                    val blocklist = upload_pre_res.body()!!.block_list
-                    println("upload id: ${up_id}")
-                    println("block list: ${blocklist}")
-                } else {
-                    Log.e(tag, "upload_pre_call failed!")
-                }*/
+//                var file = File(app_path + "config.yaml");
+//                val file_md5 = getMD5(file.readText())
+//                println(file_md5)
+//                val pre_req = NetDiskAPI.preCreateReq("apps/SLAM_APP/config.yaml",
+//                    "645", "0", 1, 0,  listOf<String>(file_md5).toString())
+//                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token,
+//                    "apps/SLAM_APP/config.yaml", file.totalSpace.toInt(), 0, 1,
+//                    3, "["+file_md5+"]")
+
+//                val file_url = java.net.URLEncoder.encode("apps/SLAM_APP/config.yaml", "utf-8")
+//                println(file_url)
+//                val upload_pre_call = netDiskAPI.uploadPrecreate("precreate", access_token, file_url,
+//                    "645", "0", 1, 3,  listOf<String>(file_md5).toString())
+//                val upload_pre_res = upload_pre_call.execute()
+//                println(upload_pre_res.toString())
+//                if (upload_pre_res.code() == 200) {
+//                    Log.i(tag, "upload_pre_call success.")
+//                    val up_id = upload_pre_res.body()!!.uploadid
+//                    val blocklist = upload_pre_res.body()!!.block_list
+//                    println("upload id: ${up_id}")
+//                    println("block list: ${blocklist}")
+//                } else {
+//                    Log.e(tag, "upload_pre_call failed!")
+//                }
 
                 awaitCancellation()
             }
@@ -242,6 +333,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
             }
             syncWithServer(local_file_list_data, server_file_list_data)
             local_list_file.writeText(server_file_list_string)
+            */
 
 //            file_snackbar.dismiss()
             file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
@@ -344,7 +436,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
         }
     }
 
-/*    fun getMD5(input:String): String {
+    fun getMD5(input:String): String {
         val md = MessageDigest.getInstance("MD5")
         return BigInteger(1, md.digest(input.toByteArray())).toString(16).padStart(32, '0')
     }
@@ -359,7 +451,8 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
             hex.append(str.substring(str.length -2))
         }
         return hex.toString()
-    }*/
+    }
+
     /**
      * 安装apk
      *
