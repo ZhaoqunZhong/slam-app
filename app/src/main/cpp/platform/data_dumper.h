@@ -20,6 +20,7 @@ public:
     void dumpAccData(acc_msg & accMsg);
     void dumpGyroData(gyr_msg & gyroMsg);
     void DumpThreadFunction();
+    uint64_t getCurrentDataSize();
 private:
     std::string dump_path_;
     bool dump_open_ = false;

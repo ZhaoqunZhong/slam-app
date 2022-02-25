@@ -185,3 +185,9 @@ JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getGyrFps(JNIEnv *env, jobject thiz) {
     return perf_gyr.getFPS();
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getDataSize(JNIEnv *env,
+                                                                          jobject thiz) {
+    return dataDumper.getCurrentDataSize();
+}

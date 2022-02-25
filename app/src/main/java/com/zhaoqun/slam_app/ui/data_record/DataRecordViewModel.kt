@@ -36,6 +36,8 @@ class DataRecordViewModel : ViewModel() {
     val _acc_freq = MutableLiveData<String>()
 
     val _gyr_freq = MutableLiveData<String>()
+
+    val _data_size = MutableLiveData<String>()
 }
 
 @Serializable

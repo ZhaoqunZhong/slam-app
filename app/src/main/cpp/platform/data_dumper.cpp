@@ -276,3 +276,19 @@ void DataDumper::DumpThreadFunction() {
         }
     }
 }
+
+uint64_t DataDumper::getCurrentDataSize() {
+    if (!std::filesystem::exists(dump_path_))
+        return 0;
+    else {
+        uint64_t size = 0;
+        for(std::filesystem::recursive_directory_iterator it(dump_path_);
+            it!=std::filesystem::recursive_directory_iterator();
+            ++it)
+        {
+            if(!std::filesystem::is_directory(*it))
+                size += std::filesystem::file_size(*it);
+        }
+        return size / 1e6;
+    }
+}
