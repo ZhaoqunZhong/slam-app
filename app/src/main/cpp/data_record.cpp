@@ -170,3 +170,18 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_sendSurfaceToJNI(J
     preview_native_window = ANativeWindow_fromSurface(env, cam_sf);
     ANativeWindow_acquire(preview_native_window);
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getCamFps(JNIEnv *env, jobject thiz) {
+    return perf_rgb.getFPS();
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getAccFps(JNIEnv *env, jobject thiz) {
+    return perf_acc.getFPS();
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getGyrFps(JNIEnv *env, jobject thiz) {
+    return perf_gyr.getFPS();
+}

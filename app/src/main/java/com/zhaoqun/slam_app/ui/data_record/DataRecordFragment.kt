@@ -21,7 +21,10 @@ import android.widget.AdapterView
 
 import android.widget.ArrayAdapter
 import androidx.core.view.marginStart
+import androidx.lifecycle.lifecycleScope
 import com.zhaoqun.slam_app.file_server.FileSynchronizer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -54,6 +57,7 @@ class DataRecordFragment : Fragment() {
         val root: View = binding.root
 
         prepareDefaultOptions()
+        backgroundDataTask()
 
         binding.camResolution.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -130,6 +134,9 @@ class DataRecordFragment : Fragment() {
         dataRecordViewModel._imu_order.observe(viewLifecycleOwner, {binding.imuOrder.setSelection(it)})
         dataRecordViewModel._pack_rosbag.observe(viewLifecycleOwner, {binding.packRosbag.isChecked = it})
         dataRecordViewModel._enable_60hz.observe(viewLifecycleOwner, {binding.enable60hz.isChecked = it})
+        dataRecordViewModel._cam_freq.observe(viewLifecycleOwner, {binding.camFps.text = it})
+        dataRecordViewModel._acc_freq.observe(viewLifecycleOwner, {binding.accFps.text = it})
+        dataRecordViewModel._gyr_freq.observe(viewLifecycleOwner, {binding.gyrFps.text = it})
 
         var cam_ids = arrayListOf<String>("-1")
         var imu_freqs = arrayListOf<String>("0")
@@ -199,6 +206,17 @@ class DataRecordFragment : Fragment() {
         record_config_file.writeText(record_config_string)*/
     }
 
+    fun backgroundDataTask() {
+        lifecycleScope.launch(context = Dispatchers.IO){
+            while(true){
+                Thread.sleep(100)
+                dataRecordViewModel._cam_freq.postValue(getCamFps().toString() + "hz")
+                dataRecordViewModel._acc_freq.postValue(getAccFps().toString() + "hz")
+                dataRecordViewModel._gyr_freq.postValue(getGyrFps().toString() + "hz")
+            }
+        }
+    }
+
     external fun getBackCamIDs() : Array<String>
     external fun getImuFreqs() : Array<String>
     // Kotlin alternatives
@@ -210,6 +228,10 @@ class DataRecordFragment : Fragment() {
 //    external fun openPreview()
 //    external fun closePreview()
     external fun sendSurfaceToJNI(cam_sf: Surface)
+
+    external fun getCamFps() : Int
+    external fun getAccFps() : Int
+    external fun getGyrFps() : Int
 
     companion object {
         // Used to load the 'native-lib' library on application startup.

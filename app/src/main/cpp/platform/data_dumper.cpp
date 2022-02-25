@@ -210,8 +210,10 @@ void DataDumper::DumpThreadFunction() {
             if (save_images_) {
                 std::string folder = dump_path_ + "rgb_images/";
                 std::string filename = folder + std::to_string(msg.ts) + ".png";
-                cv::imwrite(filename, msg.yMat); //TODO: make this thread function
-    /*            auto f = [](std::string &filename, cv::Mat &mat) {
+
+                cv::imwrite(filename, msg.yMat);
+                // thread function version of saving image file
+/*                auto f = [](std::string &filename, cv::Mat &mat) {
                     cv::imwrite(filename, mat);
                 };
                 std::thread t(f, filename, msg.yMat);*/

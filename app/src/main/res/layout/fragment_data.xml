@@ -36,7 +36,7 @@
         android:id="@+id/record_imu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="8dp"
         android:text="Record imu"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/ts_format" />
@@ -74,7 +74,7 @@
         android:layout_height="wrap_content"
         android:text="Save images"
         android:visibility="invisible"
-        app:layout_constraintStart_toStartOf="@+id/record_cam"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/record_cam" />
 
     <CheckBox
@@ -84,7 +84,7 @@
         android:layout_marginTop="8dp"
         android:text="Pack rosbag"
         android:visibility="invisible"
-        app:layout_constraintStart_toEndOf="@+id/divider_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imu_order" />
 
     <View
@@ -193,50 +193,70 @@
         android:id="@+id/post_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="postfix with time"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/folder_name"
         app:layout_constraintTop_toBottomOf="@+id/folder_name" />
 
     <TextView
         android:id="@+id/textView9"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
-        android:text="Current data size"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/post_time" />
+        android:layout_marginTop="8dp"
+        android:text="Current data size:"
+        app:layout_constraintStart_toStartOf="@+id/textView14"
+        app:layout_constraintTop_toBottomOf="@+id/textView14" />
 
     <TextView
-        android:id="@+id/textView10"
+        android:id="@+id/textView8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="TextView"
+        android:layout_marginStart="16dp"
+        android:text="Current cam fps: "
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider_horizonal" />
+
+    <TextView
+        android:id="@+id/textView13"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Current acc fps: "
+        app:layout_constraintStart_toStartOf="@+id/textView8"
+        app:layout_constraintTop_toBottomOf="@+id/textView8" />
+
+    <TextView
+        android:id="@+id/data_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/textView9"
         app:layout_constraintStart_toEndOf="@+id/textView9"
-        app:layout_constraintTop_toTopOf="@+id/textView9" />
+        app:layout_constraintTop_toTopOf="@+id/textView9"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Switch
         android:id="@+id/record_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="32dp"
         android:text="Record"
         app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
+        app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView9" />
 
     <EditText
         android:id="@+id/folder_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="43dp"
+        android:layout_marginTop="8dp"
         android:ems="10"
         android:hint="Data folder name"
         android:inputType="textPersonName"
         android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/divider_horizonal" />
+        app:layout_constraintStart_toStartOf="@+id/imu_order"
+        app:layout_constraintTop_toBottomOf="@+id/imu_order" />
 
     <CheckBox
         android:id="@+id/enable_60hz"
@@ -246,5 +266,41 @@
         android:text="60hz if support"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/cam_resolution" />
+
+    <TextView
+        android:id="@+id/cam_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView8"
+        app:layout_constraintStart_toEndOf="@+id/textView8"
+        app:layout_constraintTop_toTopOf="@+id/textView8" />
+
+    <TextView
+        android:id="@+id/textView14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Current gyr fps:"
+        app:layout_constraintStart_toStartOf="@+id/textView13"
+        app:layout_constraintTop_toBottomOf="@+id/textView13" />
+
+    <TextView
+        android:id="@+id/acc_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/textView14"
+        app:layout_constraintStart_toEndOf="@+id/textView13"
+        app:layout_constraintTop_toBottomOf="@+id/textView8" />
+
+    <TextView
+        android:id="@+id/gyr_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView14"
+        app:layout_constraintStart_toEndOf="@+id/textView14"
+        app:layout_constraintTop_toTopOf="@+id/textView14" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
