@@ -96,6 +96,7 @@ void ImagePreviewer::start(int width, int height, ANativeWindow* native_window) 
         return;
     }
     started_ = true;
+    LOG(INFO) << "ImagePreviewer started.";
     preview_h_ = height;
     preview_w_ = width;
     preview_native_window_ = native_window;
@@ -111,6 +112,7 @@ void ImagePreviewer::stop() {
         return;
     }
     started_ = false;
+    LOG(INFO) << "ImagePreviewer stopped.";
     thread_run_ = false;
     pthread_cond_signal(&preview_cond);
     pthread_join(main_th_, nullptr);

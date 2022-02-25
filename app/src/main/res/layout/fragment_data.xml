@@ -36,7 +36,7 @@
         android:id="@+id/record_imu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="Record imu"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/ts_format" />
@@ -73,6 +73,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Save images"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="@+id/record_cam"
         app:layout_constraintTop_toBottomOf="@+id/record_cam" />
 
@@ -82,6 +83,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Pack rosbag"
+        android:visibility="invisible"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/imu_order" />
 
@@ -122,7 +124,7 @@
         android:layout_marginTop="8dp"
         android:text="Camera ID"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
-        app:layout_constraintTop_toBottomOf="@+id/save_imgs" />
+        app:layout_constraintTop_toBottomOf="@+id/record_cam" />
 
     <Spinner
         android:id="@+id/cam_id"

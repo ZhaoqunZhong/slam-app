@@ -28,7 +28,7 @@ void DataDumper::dumpAccData(acc_msg & accMsg) {
     pthread_mutex_unlock(&acc_mtx_);
 
     /// rosbag
-    if (record_bag) {
+    if (record_rosbag_) {
         double acc[3] {accMsg.ax, accMsg.ay, accMsg.az};
         bag_packer_.writeAccel(accMsg.ts, acc);
     }
@@ -45,7 +45,7 @@ void DataDumper::dumpGyroData(gyr_msg &gyroMsg) {
     pthread_mutex_unlock(&gyr_mtx_);
 
     ///rosbag
-    if (record_bag) {
+    if (record_rosbag_) {
         double gyr[3] {gyroMsg.rx, gyroMsg.ry, gyroMsg.rz};
         bag_packer_.writeGyro(gyroMsg.ts, gyr);
     }
@@ -65,7 +65,7 @@ void DataDumper::dumpImuData(imu_msg & imuMsg) {
     pthread_mutex_unlock(&imu_mtx_);
 
     /// rosbag
-    if (record_bag) {
+    if (record_rosbag_) {
         double imu[6] {imuMsg.acc_part.ax, imuMsg.acc_part.ay, imuMsg.acc_part.az, imuMsg.gyro_part.rx, imuMsg.gyro_part.ry, imuMsg.gyro_part.rz};
         bag_packer_.writeImu(imuMsg.ts, imu);
     }
@@ -77,12 +77,14 @@ void* DumpThreadRunner(void *ptr) {
     return nullptr;
 }
 
-void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file_format, std::string ts_file_format) {
+void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file_format,
+                       std::string ts_file_format, bool record_bag, bool save_images) {
     if (started_) {
         LOG(WARNING) << "DataDumper already started, can't call start() again!";
         return;
     }
     started_ = true;
+    LOG(INFO) << "DataDumper started.";
     dump_path_ = path;
     acc_gyr_order_ = acc_gyr_order;
     //clear last dump
@@ -103,12 +105,14 @@ void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file
     fs.release();*/
     imu_file_format_ = "." + imu_file_format;
     image_ts_file_format_ = "." + ts_file_format;
+    record_rosbag_ = record_bag;
+    save_images_ = save_images;
 
     dump_open_ = true;
     pthread_create(&main_th_, nullptr, DumpThreadRunner, this);
 
     /// rosbag
-    if (record_bag) {
+    if (record_rosbag_) {
         std::string bag_name = dump_path_ + "rosbag.bag";
         bag_packer_.open(bag_name);
     }
@@ -120,18 +124,20 @@ void DataDumper::stop() {
         return;
     }
     started_ = false;
+    LOG(INFO) << "DataDumper stopped.";
     dump_open_ = false;
     pthread_join(main_th_, nullptr);
 
     ///rosbag
-    bag_packer_.close();
+    if (record_rosbag_)
+        bag_packer_.close();
 }
 
 
 void DataDumper::DumpThreadFunction() {
     while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !imu_queue_.empty() || !image_queue_.empty()) {
-/*        useconds_t thread_sleep_time = static_cast<useconds_t>(10);
-        usleep(thread_sleep_time);*/
+        useconds_t thread_sleep_time = static_cast<useconds_t>(10);
+        usleep(thread_sleep_time);
 
         /// write imu sensor caches to file
         std::queue<acc_msg> acc_buf; //here is empty
@@ -201,65 +207,70 @@ void DataDumper::DumpThreadFunction() {
             fs << msg.ts << std::endl;
             fs.close();
 
-            std::string folder = dump_path_ + "rgb_images/";
-            std::string filename = folder + std::to_string(msg.ts) + ".png";
-            cv::imwrite(filename, msg.yMat); //TODO: make this thread function
-/*            auto f = [](std::string &filename, cv::Mat &mat) {
-                cv::imwrite(filename, mat);
-            };
-            std::thread t(f, filename, msg.yMat);*/
+            if (save_images_) {
+                std::string folder = dump_path_ + "rgb_images/";
+                std::string filename = folder + std::to_string(msg.ts) + ".png";
+                cv::imwrite(filename, msg.yMat); //TODO: make this thread function
+    /*            auto f = [](std::string &filename, cv::Mat &mat) {
+                    cv::imwrite(filename, mat);
+                };
+                std::thread t(f, filename, msg.yMat);*/
+            }
+
             /// rosbag
-            if (record_bag)
+            if (record_rosbag_)
                 bag_packer_.writeImage(msg.ts, msg.yMat.data, msg.yMat.rows * msg.yMat.cols, msg.yMat.cols, msg.yMat.rows);
         }
 
-        ///rosbag packer flush caches to bag file
-        bag_packer_.imuMutex_.lock();
-        while (!bag_packer_.imu_.empty()) {
-            try {
-                sensor_msgs::Imu msg = bag_packer_.imu_.front();
-                bag_packer_.bag_.write(DEFAULT_TOPIC_IMU, msg.header.stamp, msg);
-                bag_packer_.imu_.pop();
-            } catch (BagException e) {
+        ///rosbag packer flush sensor caches to bag file
+        if (record_rosbag_) {
+            bag_packer_.imuMutex_.lock();
+            while (!bag_packer_.imu_.empty()) {
+                try {
+                    sensor_msgs::Imu msg = bag_packer_.imu_.front();
+                    bag_packer_.bag_.write(DEFAULT_TOPIC_IMU, msg.header.stamp, msg);
+                    bag_packer_.imu_.pop();
+                } catch (BagException e) {
 
+                }
             }
-        }
-        bag_packer_.imuMutex_.unlock();
+            bag_packer_.imuMutex_.unlock();
 
-        bag_packer_.accelMutex_.lock();
-        while (!bag_packer_.accel_.empty()) {
-            try {
-                geometry_msgs::Vector3Stamped msg = bag_packer_.accel_.front();
-                bag_packer_.bag_.write(DEFAULT_TOPIC_ACCEL, msg.header.stamp, msg);
-                bag_packer_.accel_.pop();
-            }catch(BagException e){
+            bag_packer_.accelMutex_.lock();
+            while (!bag_packer_.accel_.empty()) {
+                try {
+                    geometry_msgs::Vector3Stamped msg = bag_packer_.accel_.front();
+                    bag_packer_.bag_.write(DEFAULT_TOPIC_ACCEL, msg.header.stamp, msg);
+                    bag_packer_.accel_.pop();
+                }catch(BagException e){
 
+                }
             }
-        }
-        bag_packer_.accelMutex_.unlock();
+            bag_packer_.accelMutex_.unlock();
 
-        bag_packer_.gyroMutex_.lock();
-        while (!bag_packer_.gyro_.empty()) {
-            try{
-                geometry_msgs::Vector3Stamped msg = bag_packer_.gyro_.front();
-                bag_packer_.bag_.write(DEFAULT_TOPIC_GYRO, msg.header.stamp, msg);
-                bag_packer_.gyro_.pop();
-            }catch(BagException e){
+            bag_packer_.gyroMutex_.lock();
+            while (!bag_packer_.gyro_.empty()) {
+                try{
+                    geometry_msgs::Vector3Stamped msg = bag_packer_.gyro_.front();
+                    bag_packer_.bag_.write(DEFAULT_TOPIC_GYRO, msg.header.stamp, msg);
+                    bag_packer_.gyro_.pop();
+                }catch(BagException e){
 
+                }
             }
-        }
-        bag_packer_.gyroMutex_.unlock();
+            bag_packer_.gyroMutex_.unlock();
 
-        bag_packer_.imageMutex_.lock();
-        while (!bag_packer_.image_.empty()) {
-            try {
-                sensor_msgs::Image image = bag_packer_.image_.front();
-                bag_packer_.bag_.write(DEFAULT_TOPIC_IMAGE, image.header.stamp, image);
-                bag_packer_.image_.pop(); // this line sometimes fails
-            } catch (BagException e) {
+            bag_packer_.imageMutex_.lock();
+            while (!bag_packer_.image_.empty()) {
+                try {
+                    sensor_msgs::Image image = bag_packer_.image_.front();
+                    bag_packer_.bag_.write(DEFAULT_TOPIC_IMAGE, image.header.stamp, image);
+                    bag_packer_.image_.pop(); // this line sometimes fails
+                } catch (BagException e) {
 
+                }
             }
+            bag_packer_.imageMutex_.unlock();
         }
-        bag_packer_.imageMutex_.unlock();
     }
 }

@@ -37,10 +37,10 @@ public:
     void close();
 
     void exit();
-    void writeAccel(long long timeStamp, double *accel);
-    void writeGyro(long long timeStamp, double *gyro);
-    void writeImu(long long timeStamp, double *imu);
-    void writeImage(long long timeStamp, const unsigned char *buf_ptr, int size, int width, int height);
+    void writeAccel(uint64_t timeStamp, double *accel);
+    void writeGyro(uint64_t timeStamp, double *gyro);
+    void writeImu(uint64_t timeStamp, double *imu);
+    void writeImage(uint64_t timeStamp, const unsigned char *buf_ptr, int size, int width, int height);
 
     //void packing();
     void reset();

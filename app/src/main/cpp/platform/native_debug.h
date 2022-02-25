@@ -55,7 +55,6 @@ extern void updatePreviewMat(cv::Mat mat, bool r);
 /*----------------dataset player--------------------*/
 extern pthread_mutex_t data_play_mtx;
 extern pthread_cond_t data_play_cond;
-extern int record_bag;
 
 /*----------------simulation groundtruth--------------------*/
 extern std::unordered_map<double, Eigen::Matrix4d> sim_twc_gts;

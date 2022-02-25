@@ -54,7 +54,7 @@ void RosbagPacker::close() {
     bag_.close();
 }
 
-void RosbagPacker::writeAccel(long long timeStamp, double *value) {
+void RosbagPacker::writeAccel(uint64_t timeStamp, double *value) {
     geometry_msgs::Vector3Stamped accelMsg;
     accelMsg.header.stamp.fromNSec(timeStamp);
     accelMsg.vector.x = value[0];
@@ -66,7 +66,7 @@ void RosbagPacker::writeAccel(long long timeStamp, double *value) {
     accelMutex_.unlock();
 }
 
-void RosbagPacker::writeGyro(long long timeStamp, double *value) {
+void RosbagPacker::writeGyro(uint64_t timeStamp, double *value) {
 
     geometry_msgs::Vector3Stamped gyroMsg;
     gyroMsg.header.stamp.fromNSec(timeStamp);
@@ -79,7 +79,7 @@ void RosbagPacker::writeGyro(long long timeStamp, double *value) {
     gyroMutex_.unlock();
 }
 
-void RosbagPacker::writeImu(long long timeStamp, double *value) {
+void RosbagPacker::writeImu(uint64_t timeStamp, double *value) {
 
     sensor_msgs::Imu imuMsg;
     imuMsg.header.stamp.fromNSec(timeStamp);
@@ -96,7 +96,7 @@ void RosbagPacker::writeImu(long long timeStamp, double *value) {
 }
 
 void
-RosbagPacker::writeImage(long long timeStamp, const unsigned char *buf_ptr, int size, int width,
+RosbagPacker::writeImage(uint64_t timeStamp, const unsigned char *buf_ptr, int size, int width,
                          int height) {
     //LOGW("size = %d", size);
     //LOGW("writeImage image time = %lld", timeStamp);

@@ -50,7 +50,7 @@ class ImuPublisher {
     void constructImuInterpolateAcc();
 	std::vector<gyr_msg> gyro_cache_;
 	std::vector<acc_msg> acc_cache_;
-	double last_acc_ts_, last_gyro_ts_;
+	int64_t last_acc_ts_, last_gyro_ts_;
 	pthread_mutex_t cache_mtx_ = PTHREAD_MUTEX_INITIALIZER;
 
 	AHardwareBuffer *acc_buffer_;
@@ -67,10 +67,10 @@ public:
 		imu_callback_ = fimu;
 		acc_callback_ = facc;
 		gyro_callback_ = fgyro;
-		LOGI("ImuPublisher constructed.");
+		// LOGI("ImuPublisher constructed.");
 	};
 	~ImuPublisher(){
-		LOGI("ImuPublisher destroyed."); //never called
+		// LOGI("ImuPublisher destroyed."); //never called
 	};
 	void run(); //make public for wrapper
 	void runAcc();

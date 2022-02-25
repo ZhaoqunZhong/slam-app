@@ -93,14 +93,15 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     std::string data_folder_name = folder_name;
     if (post_with_time || data_folder_name.empty())
         data_folder_name += time_postfix;
-    LOG(INFO) << "data folder name " << data_folder_name;
+    data_folder_name += "/";
+    // LOG(INFO) << "data folder name " << data_folder_name;
     std::filesystem::path data_folder(root_path.string() + data_folder_name);
     if (std::filesystem::exists(data_folder))
         std::filesystem::remove_all(data_folder);
-    std::filesystem::create_directories(data_folder.string() + "/rgb_images/");
+    std::filesystem::create_directories(data_folder.string() + "rgb_images/");
     // Write config file of this record.
-    std::string record_config_file = data_folder.string() + "/record_config.json";
-    LOG(INFO) << "record config file: " << record_config_file;
+    std::string record_config_file = data_folder.string() + "record_config.json";
+    // LOG(INFO) << "record config file: " << record_config_file;
     std::ofstream cfs(record_config_file, std::ios::out);
     if (cfs.is_open()) {
         cfs << config_string << std::endl;
@@ -119,10 +120,11 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         camPublisher.start(camera_id, res.first, res.second, enable60hz);
         previewer.start(res.second, res.first, preview_native_window);
     }
+    if (record_imu)
+        imuPublisher.start(imu_freq, sync_acc_gyr);
 
-    // imuPublisher.start();
-
-    // dataDumper.start(root_path + );
+    if (record_camera || record_imu)
+        dataDumper.start(data_folder.string(), acc_gyr_order, imu_file_type, image_ts_file_type, pack_rosbag, save_image);
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -130,6 +132,9 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_stopDumpJNI(JNIEnv
                                                                           jobject thiz) {
     camPublisher.stop();
     previewer.stop();
+    imuPublisher.stop();
+    dataDumper.stop();
+
 }
 extern "C"
 JNIEXPORT jobjectArray JNICALL

@@ -76,14 +76,12 @@ void ImuPublisher::init() {
 	}*/
 
     if (use_direct_channel_) {
-        // int direct_report_level_ = ASensor_getHighestDirectReportRateLevel(accelerometer_);
-        // LOGI("report level : %d", direct_report_level_);
         int acc_mode = ASensor_getReportingMode(accelerometer_);
-        // LOGI("acc mode : %d", acc_mode);
+        LOGI("acc reporting mode : %d", acc_mode); // 0: continuous
         bool acc_dc_hw = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER);
-        // LOGI("acc direct channel hardware buffer %s", acc_dc_hw ? "supported" : "not supported");
+        LOGI("acc direct channel hardware buffer %s", acc_dc_hw ? "supported" : "not supported");
         bool acc_dc_sm = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY);
-        // LOGI("acc direct channel shared memory %s", acc_dc_sm ? "supported" : "not supported");
+        LOGI("acc direct channel shared memory %s", acc_dc_sm ? "supported" : "not supported");
         AHardwareBuffer_Desc bufferDesc {
                 .width = 104,
                 .height = 1,
@@ -133,6 +131,7 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
         return;
     }
     started_ = true;
+    LOG(INFO) << "ImuPublisher started.";
 
     sync_acc_gyr_ = sync_acc_gyr;
     if (imu_freq == 0) {
@@ -160,6 +159,7 @@ void ImuPublisher::stop() {
         return;
     }
     started_ = false;
+    LOG(INFO) << "ImuPublisher stopped.";
 	imu_publish_on_ = false;
     if(use_direct_channel_) {
         pthread_join(acc_thread_, nullptr);
@@ -193,8 +193,12 @@ void ImuPublisher::run() {
 			if (event.type == ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED) {
 				acc_msg accMsg;
 				accMsg.ts = event.timestamp;
-				if (accMsg.ts - last_acc_ts_ < 1e5) //0.0001s
+				if (accMsg.ts - last_acc_ts_ < 1e5) {//0.0001s
+                    LOG(WARNING) << "acc timestamp error";
+                    LOG(INFO) << "current acc ts " << accMsg.ts;
+                    LOG(INFO) << "last acc ts " << last_acc_ts_;
                     continue;
+                }
 				last_acc_ts_ = accMsg.ts;
 				accMsg.ax = event.acceleration.x;
 				accMsg.ay = event.acceleration.y;
@@ -211,8 +215,12 @@ void ImuPublisher::run() {
 			else if (event.type == ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED) {
 				gyr_msg gyroMsg;
 				gyroMsg.ts = event.timestamp;
-				if (gyroMsg.ts - last_gyro_ts_ < 1e5)
+                if (gyroMsg.ts - last_gyro_ts_ < 1e5) {
+                    LOG(WARNING) << "gyr timestamp error";
+                    LOG(INFO) << "current gyr ts " << gyroMsg.ts;
+                    LOG(INFO) << "last gyr ts " << last_gyro_ts_;
                     continue;
+                }
 				last_gyro_ts_ = gyroMsg.ts;
 				gyroMsg.rx = event.uncalibrated_gyro.x_uncalib;
 				gyroMsg.ry = event.uncalibrated_gyro.y_uncalib;
@@ -248,8 +256,10 @@ void ImuPublisher::run() {
 
 void ImuPublisher::runAcc() {
     while (imu_publish_on_) {
-//        useconds_t thread_sleep_time = static_cast<useconds_t>(100);
-//        usleep(thread_sleep_time);
+        // The sleep here is because the sonsor reporting mode is continuous, not on_change.
+        // Means you will get the same message multiple times until it is replaced by new message.
+        useconds_t thread_sleep_time = static_cast<useconds_t>(100); //0.1ms
+        usleep(thread_sleep_time);
 
         void *acc_mem;
         int acc_l_rs = AHardwareBuffer_lock(acc_buffer_, AHARDWAREBUFFER_USAGE_CPU_READ_MASK, -1, NULL, &acc_mem);
@@ -265,8 +275,7 @@ void ImuPublisher::runAcc() {
 //        LOGI("acc data %f, %f, %f", acc_data->x, acc_data->y, acc_data->z);
         acc_msg accMsg;
         accMsg.ts = *(static_cast<int64_t*>(acc_mem) + 2);
-        if (accMsg.ts - last_acc_ts_ < 1e5) {// 1ms
-            LOG(WARNING) << "acc timestamp error";
+        if (accMsg.ts - last_acc_ts_ < 1e5) {// 0.1ms
             continue;
         }
 
@@ -298,8 +307,10 @@ void ImuPublisher::runAcc() {
 
 void ImuPublisher::runGyro() {
     while (imu_publish_on_) {
-//        useconds_t thread_sleep_time = static_cast<useconds_t>(100);
-//        usleep(thread_sleep_time);
+        // The sleep here is because the sonsor reporting mode is continuous, not on_change.
+        // Means you will get the same message multiple times until it is replaced by new message.
+        useconds_t thread_sleep_time = static_cast<useconds_t>(100); //0.1ms
+        usleep(thread_sleep_time);
 
         void *gyro_mem;
         int gyro_l_rs = AHardwareBuffer_lock(gyro_buffer_, AHARDWAREBUFFER_USAGE_CPU_READ_MASK, -1, NULL, &gyro_mem);
@@ -316,7 +327,6 @@ void ImuPublisher::runGyro() {
         gyr_msg gyroMsg;
         gyroMsg.ts = *(static_cast<int64_t*>(gyro_mem) + 2);
         if (gyroMsg.ts - last_gyro_ts_ < 1e5) {
-            LOG(WARNING) << "gyr timestamp error";
             continue;
         }
         last_gyro_ts_ = gyroMsg.ts;

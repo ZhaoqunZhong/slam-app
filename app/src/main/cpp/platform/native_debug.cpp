@@ -158,7 +158,6 @@ void updatePreviewMat(cv::Mat mat, bool r) {
 /*----------------dataset player--------------------*/
 pthread_mutex_t data_play_mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t data_play_cond = PTHREAD_COND_INITIALIZER;
-int record_bag = 0;
 
 /*----------------simulation groundtruth--------------------*/
 std::unordered_map<double, Eigen::Matrix4d> sim_twc_gts;

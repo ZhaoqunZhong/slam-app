@@ -102,6 +102,7 @@ class DataRecordFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        stopDumpJNI()
     }
 
     fun prepareDefaultOptions () {
@@ -168,7 +169,7 @@ class DataRecordFragment : Fragment() {
             binding.postTime.isChecked,
             SimpleDateFormat("'-D'yyyy-MM-dd'-T'HH-mm-ss").format(Date()),
             binding.recordCam.isChecked,
-            binding.saveImgs.isChecked,
+            true, //binding.saveImgs.isChecked,
             binding.camId.selectedItem.toString(),
             binding.camResolution.selectedItemPosition,
             binding.enable60hz.isChecked,
@@ -178,7 +179,7 @@ class DataRecordFragment : Fragment() {
             binding.imuFps.selectedItemPosition,
             binding.imuFile.selectedItem.toString(),
             binding.imuOrder.selectedItemPosition,
-            binding.packRosbag.isChecked
+            false //binding.packRosbag.isChecked
         )
         val record_config_string = json.encodeToString(record_config)
 //        Log.i(debug_tag, "record_config string $record_config_string")

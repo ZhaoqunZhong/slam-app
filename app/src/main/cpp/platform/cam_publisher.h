@@ -8,6 +8,7 @@
 #include <media/NdkImageReader.h>
 #include "opencv2/core.hpp"
 #include "perf_monitor.h"
+#include "native_debug.h"
 
 #define USE_RGB_CAM
 //#define USE_DEPTH_CAM
@@ -31,8 +32,11 @@ public:
     CamPublisher( void (*f_rgb) (rgb_msg &), void (*f_depth)(depth_msg &)) {
         rgbCallback_ = f_rgb;
         depthCallback_ = f_depth;
+        // LOGI("CamPublisher constructed.");
     };
-    ~CamPublisher(){};
+    ~CamPublisher(){
+        // LOGI("CamPublisher destroyed.");
+    };
     void start(std::string cam_id, int width, int height, bool allow60hz);
     void stop();
     static uint32_t depth_width_, depth_height_;

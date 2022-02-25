@@ -482,6 +482,7 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
         return;
     }
     started_ = true;
+    LOG(INFO) << "CamPublisher started.";
     rgbCallback = rgbCallback_;
     depthCallback = depthCallback_;
     cameraMgr_ = ACameraManager_create();
@@ -601,6 +602,7 @@ void CamPublisher::stop() {
         return;
     }
     started_ = false;
+    LOG(INFO) << "CamPublisher stopped.";
 #ifdef USE_RGB_CAM
     ACaptureRequest_free(rgb_capRequest_);
     ACameraOutputTarget_free(rgb_outputTarget_);
