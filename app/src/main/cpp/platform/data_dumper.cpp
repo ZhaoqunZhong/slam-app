@@ -77,7 +77,7 @@ void* DumpThreadRunner(void *ptr) {
     return nullptr;
 }
 
-void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file_format,
+void DataDumper::start(std::string path, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
                        std::string ts_file_format, bool record_bag, bool save_images) {
     if (started_) {
         LOG(WARNING) << "DataDumper already started, can't call start() again!";
@@ -86,6 +86,7 @@ void DataDumper::start(std::string path, int acc_gyr_order, std::string imu_file
     started_ = true;
     LOG(INFO) << "DataDumper started.";
     dump_path_ = path;
+    sync_acc_gyr_ = sync_acc_gyr;
     acc_gyr_order_ = acc_gyr_order;
     //clear last dump
 /*    DIR *dir = opendir(dump_path_.c_str());
@@ -133,6 +134,9 @@ void DataDumper::stop() {
         bag_packer_.close();
 }
 
+void testfunc(std::string &filename, cv::Mat &mat) {
+    cv::imwrite(filename, mat);
+};
 
 void DataDumper::DumpThreadFunction() {
     while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !imu_queue_.empty() || !image_queue_.empty()) {
@@ -161,6 +165,8 @@ void DataDumper::DumpThreadFunction() {
         }
         pthread_mutex_unlock(&imu_mtx_);
 
+
+        // pthread_mutex_lock(&data_folder_mtx_);
         std::ofstream accf(dump_path_ + "acc" + imu_file_format_, std::ios::app);
         while (!acc_buf.empty()) {
             acc_msg msg = acc_buf.front();
@@ -177,20 +183,22 @@ void DataDumper::DumpThreadFunction() {
         }
         gyrf.close();
 
-        std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
-        while (!imu_buf.empty()) {
-            imu_msg msg = imu_buf.front();
-            imu_buf.pop();
-            if (acc_gyr_order_ == 0)
-                imuf << msg.ts << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
-                     << msg.acc_part.az << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry
-                     << "," << msg.gyro_part.rz << std::endl;
-            else
-                imuf << msg.ts << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry << ","
-                     << msg.gyro_part.rz << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
-                     << msg.acc_part.az << ","<< std::endl;
+        if (sync_acc_gyr_) {
+            std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
+            while (!imu_buf.empty()) {
+                imu_msg msg = imu_buf.front();
+                imu_buf.pop();
+                if (acc_gyr_order_ == 0)
+                    imuf << msg.ts << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
+                         << msg.acc_part.az << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry
+                         << "," << msg.gyro_part.rz << std::endl;
+                else
+                    imuf << msg.ts << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry << ","
+                         << msg.gyro_part.rz << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
+                         << msg.acc_part.az << ","<< std::endl;
+            }
+            imuf.close();
         }
-        imuf.close();
 
         /// write image caches to .png files and rosbag packer
         std::queue<rgb_msg> image_buf;
@@ -212,11 +220,13 @@ void DataDumper::DumpThreadFunction() {
                 std::string filename = folder + std::to_string(msg.ts) + ".png";
 
                 cv::imwrite(filename, msg.yMat);
+
                 // thread function version of saving image file
 /*                auto f = [](std::string &filename, cv::Mat &mat) {
                     cv::imwrite(filename, mat);
                 };
-                std::thread t(f, filename, msg.yMat);*/
+                std::thread t(testfunc, std::ref(filename), std::ref(msg.yMat));
+                t.detach();*/
             }
 
             /// rosbag
@@ -274,12 +284,16 @@ void DataDumper::DumpThreadFunction() {
             }
             bag_packer_.imageMutex_.unlock();
         }
+        // pthread_mutex_unlock(&data_folder_mtx_);
     }
 }
 
 uint64_t DataDumper::getCurrentDataSize() {
-    if (!std::filesystem::exists(dump_path_))
+    if (folder_size_lock_)
         return 0;
+    if (!std::filesystem::exists(dump_path_)) {
+        return 0;
+    }
     else {
         uint64_t size = 0;
         for(std::filesystem::recursive_directory_iterator it(dump_path_);
@@ -291,4 +305,12 @@ uint64_t DataDumper::getCurrentDataSize() {
         }
         return size / 1e6;
     }
+}
+
+void DataDumper::lockFolderSize() {
+    folder_size_lock_ = true;
+}
+
+void DataDumper::unlockFolderSize() {
+    folder_size_lock_ = false;
 }

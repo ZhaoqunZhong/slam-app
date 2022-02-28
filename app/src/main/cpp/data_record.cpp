@@ -96,8 +96,10 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     data_folder_name += "/";
     // LOG(INFO) << "data folder name " << data_folder_name;
     std::filesystem::path data_folder(root_path.string() + data_folder_name);
+    dataDumper.lockFolderSize();
     if (std::filesystem::exists(data_folder))
         std::filesystem::remove_all(data_folder);
+    dataDumper.unlockFolderSize();
     std::filesystem::create_directories(data_folder.string() + "rgb_images/");
     // Write config file of this record.
     std::string record_config_file = data_folder.string() + "record_config.json";
@@ -124,7 +126,8 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
         imuPublisher.start(imu_freq, sync_acc_gyr);
 
     if (record_camera || record_imu)
-        dataDumper.start(data_folder.string(), acc_gyr_order, imu_file_type, image_ts_file_type, pack_rosbag, save_image);
+        dataDumper.start(data_folder.string(), sync_acc_gyr, acc_gyr_order, imu_file_type,
+                         image_ts_file_type, pack_rosbag, save_image);
 }
 extern "C"
 JNIEXPORT void JNICALL

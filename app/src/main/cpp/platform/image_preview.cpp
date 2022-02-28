@@ -116,7 +116,7 @@ void ImagePreviewer::stop() {
     thread_run_ = false;
     pthread_cond_signal(&preview_cond);
     pthread_join(main_th_, nullptr);
-    ANativeWindow_release(preview_native_window_);
+    // ANativeWindow_release(preview_native_window_);
 }
 
 

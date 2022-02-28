@@ -12,7 +12,7 @@ class DataDumper {
 public:
     DataDumper(){};
     ~DataDumper(){};
-    void start(std::string path, int acc_gyr_order, std::string imu_file_format,
+    void start(std::string path, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
                std::string ts_file_format, bool record_bag, bool save_images);
     void stop();
     void dumpRgbImage(rgb_msg & image);
@@ -21,9 +21,13 @@ public:
     void dumpGyroData(gyr_msg & gyroMsg);
     void DumpThreadFunction();
     uint64_t getCurrentDataSize();
+    void lockFolderSize();
+    void unlockFolderSize();
+
 private:
     std::string dump_path_;
     bool dump_open_ = false;
+    bool sync_acc_gyr_;
     int acc_gyr_order_ = 0; // 0: acc in front, 1: gyr in front
     std::string imu_file_format_, image_ts_file_format_;
     bool save_images_;
@@ -33,6 +37,7 @@ private:
     std::queue<rgb_msg> image_queue_;
     pthread_mutex_t acc_mtx_ = PTHREAD_MUTEX_INITIALIZER, gyr_mtx_ = PTHREAD_MUTEX_INITIALIZER,
     imu_mtx_ = PTHREAD_MUTEX_INITIALIZER, image_mtx_ = PTHREAD_MUTEX_INITIALIZER;
+    std::atomic<bool> folder_size_lock_ = true;
     pthread_t main_th_;
     bool started_ = false;
     /// rosbag
