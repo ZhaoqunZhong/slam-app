@@ -8,17 +8,17 @@
 #include <filesystem>
 
 void DataDumper::dumpRgbImage(rgb_msg & image) {
-    if (!dump_open_ || image.yMat.empty())
+    if (!dump_open_ || image.yMat.empty() || !record_cam_)
         return;
 
-    pthread_mutex_lock(&acc_mtx_);
+    pthread_mutex_lock(&image_mtx_);
     image_queue_.push(image);
-    pthread_mutex_unlock(&acc_mtx_);
+    pthread_mutex_unlock(&image_mtx_);
 }
 
 
 void DataDumper::dumpAccData(acc_msg & accMsg) {
-    if (!dump_open_)
+    if (!dump_open_ || !record_imu_)
         return;
 /*  std::ofstream accf(dump_path_ + "acc" + imu_file_format_, std::ios::app);
     accf << accMsg.ts << "," << accMsg.ax << "," <<accMsg.ay << "," <<accMsg.az << std::endl;
@@ -35,7 +35,7 @@ void DataDumper::dumpAccData(acc_msg & accMsg) {
 }
 
 void DataDumper::dumpGyroData(gyr_msg &gyroMsg) {
-    if (!dump_open_)
+    if (!dump_open_ || !record_imu_)
         return;
 /*    std::ofstream gyrf(dump_path_ + "gyr" + imu_file_format_, std::ios::app);
     gyrf << gyroMsg.ts << "," << gyroMsg.rx << "," <<gyroMsg.ry << "," <<gyroMsg.rz << std::endl;
@@ -52,7 +52,7 @@ void DataDumper::dumpGyroData(gyr_msg &gyroMsg) {
 }
 
 void DataDumper::dumpImuData(imu_msg & imuMsg) {
-    if (!dump_open_)
+    if (!dump_open_ || !record_imu_)
         return;
 /*    std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
     imuf << imuMsg.ts << "," << imuMsg.acc_part.ax << "," << imuMsg.acc_part.ay << ","
@@ -77,8 +77,8 @@ void* DumpThreadRunner(void *ptr) {
     return nullptr;
 }
 
-void DataDumper::start(std::string path, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
-                       std::string ts_file_format, bool record_bag, bool save_images) {
+void DataDumper::start(std::string path, bool record_imu, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
+                       bool record_cam, std::string ts_file_format, bool record_bag, bool save_images) {
     if (started_) {
         LOG(WARNING) << "DataDumper already started, can't call start() again!";
         return;
@@ -86,6 +86,8 @@ void DataDumper::start(std::string path, bool sync_acc_gyr, int acc_gyr_order, s
     started_ = true;
     LOG(INFO) << "DataDumper started.";
     dump_path_ = path;
+    unlockFolderSize();
+    record_imu_ = record_imu;
     sync_acc_gyr_ = sync_acc_gyr;
     acc_gyr_order_ = acc_gyr_order;
     //clear last dump
@@ -105,6 +107,7 @@ void DataDumper::start(std::string path, bool sync_acc_gyr, int acc_gyr_order, s
     image_ts_file_format_ = static_cast<std::string>(fs["ts_file_format"]);
     fs.release();*/
     imu_file_format_ = "." + imu_file_format;
+    record_cam_ = record_cam;
     image_ts_file_format_ = "." + ts_file_format;
     record_rosbag_ = record_bag;
     save_images_ = save_images;
@@ -140,8 +143,8 @@ void testfunc(std::string &filename, cv::Mat &mat) {
 
 void DataDumper::DumpThreadFunction() {
     while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !imu_queue_.empty() || !image_queue_.empty()) {
-        useconds_t thread_sleep_time = static_cast<useconds_t>(10);
-        usleep(thread_sleep_time);
+/*        useconds_t thread_sleep_time = static_cast<useconds_t>(10);
+        usleep(thread_sleep_time);*/
 
         /// write imu sensor caches to file
         std::queue<acc_msg> acc_buf; //here is empty
@@ -166,38 +169,39 @@ void DataDumper::DumpThreadFunction() {
         pthread_mutex_unlock(&imu_mtx_);
 
 
-        // pthread_mutex_lock(&data_folder_mtx_);
-        std::ofstream accf(dump_path_ + "acc" + imu_file_format_, std::ios::app);
-        while (!acc_buf.empty()) {
-            acc_msg msg = acc_buf.front();
-            acc_buf.pop();
-            accf << msg.ts << "," << msg.ax << "," <<msg.ay << "," <<msg.az << std::endl;
-        }
-        accf.close();
-
-        std::ofstream gyrf(dump_path_ + "gyr" + imu_file_format_, std::ios::app);
-        while (!gyr_buf.empty()) {
-            gyr_msg msg = gyr_buf.front();
-            gyr_buf.pop();
-            gyrf << msg.ts << "," << msg.rx << "," <<msg.ry << "," <<msg.rz << std::endl;
-        }
-        gyrf.close();
-
-        if (sync_acc_gyr_) {
-            std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
-            while (!imu_buf.empty()) {
-                imu_msg msg = imu_buf.front();
-                imu_buf.pop();
-                if (acc_gyr_order_ == 0)
-                    imuf << msg.ts << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
-                         << msg.acc_part.az << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry
-                         << "," << msg.gyro_part.rz << std::endl;
-                else
-                    imuf << msg.ts << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry << ","
-                         << msg.gyro_part.rz << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
-                         << msg.acc_part.az << ","<< std::endl;
+        if (record_imu_) {
+            std::ofstream accf(dump_path_ + "acc" + imu_file_format_, std::ios::app);
+            while (!acc_buf.empty()) {
+                acc_msg msg = acc_buf.front();
+                acc_buf.pop();
+                accf << msg.ts << "," << msg.ax << "," <<msg.ay << "," <<msg.az << std::endl;
             }
-            imuf.close();
+            accf.close();
+
+            std::ofstream gyrf(dump_path_ + "gyr" + imu_file_format_, std::ios::app);
+            while (!gyr_buf.empty()) {
+                gyr_msg msg = gyr_buf.front();
+                gyr_buf.pop();
+                gyrf << msg.ts << "," << msg.rx << "," <<msg.ry << "," <<msg.rz << std::endl;
+            }
+            gyrf.close();
+
+            if (sync_acc_gyr_) {
+                std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
+                while (!imu_buf.empty()) {
+                    imu_msg msg = imu_buf.front();
+                    imu_buf.pop();
+                    if (acc_gyr_order_ == 0)
+                        imuf << msg.ts << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
+                             << msg.acc_part.az << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry
+                             << "," << msg.gyro_part.rz << std::endl;
+                    else
+                        imuf << msg.ts << "," << msg.gyro_part.rx << "," << msg.gyro_part.ry << ","
+                             << msg.gyro_part.rz << "," << msg.acc_part.ax << "," << msg.acc_part.ay << ","
+                             << msg.acc_part.az << ","<< std::endl;
+                }
+                imuf.close();
+            }
         }
 
         /// write image caches to .png files and rosbag packer
@@ -222,10 +226,10 @@ void DataDumper::DumpThreadFunction() {
                 cv::imwrite(filename, msg.yMat);
 
                 // thread function version of saving image file
-/*                auto f = [](std::string &filename, cv::Mat &mat) {
+/*                auto f = [](std::string filename, cv::Mat mat) {
                     cv::imwrite(filename, mat);
                 };
-                std::thread t(testfunc, std::ref(filename), std::ref(msg.yMat));
+                std::thread t(f, std::ref(filename), msg.yMat);
                 t.detach();*/
             }
 
@@ -284,7 +288,6 @@ void DataDumper::DumpThreadFunction() {
             }
             bag_packer_.imageMutex_.unlock();
         }
-        // pthread_mutex_unlock(&data_folder_mtx_);
     }
 }
 

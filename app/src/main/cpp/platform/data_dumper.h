@@ -12,8 +12,8 @@ class DataDumper {
 public:
     DataDumper(){};
     ~DataDumper(){};
-    void start(std::string path, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
-               std::string ts_file_format, bool record_bag, bool save_images);
+    void start(std::string path, bool record_imu, bool sync_acc_gyr, int acc_gyr_order, std::string imu_file_format,
+               bool record_cam, std::string ts_file_format, bool record_bag, bool save_images);
     void stop();
     void dumpRgbImage(rgb_msg & image);
     void dumpImuData(imu_msg & imuMsg);
@@ -31,6 +31,7 @@ private:
     int acc_gyr_order_ = 0; // 0: acc in front, 1: gyr in front
     std::string imu_file_format_, image_ts_file_format_;
     bool save_images_;
+    bool record_imu_, record_cam_;
     std::queue<acc_msg> acc_queue_;
     std::queue<gyr_msg> gyr_queue_;
     std::queue<imu_msg> imu_queue_;
