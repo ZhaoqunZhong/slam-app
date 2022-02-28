@@ -19,6 +19,8 @@ import com.zhaoqun.slam_app.databinding.ActivityMainBinding
 import com.zhaoqun.slam_app.file_server.FileSynchronizer
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
@@ -37,6 +39,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.zhaoqun.slam_app.ui.data_record.DataRecordViewModel
 import com.zhaoqun.slam_app.ui.image_processing.GalleryViewModel
 import java.lang.Exception
+import java.net.InetAddress
+import java.net.UnknownHostException
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,8 +51,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_PERMISSION_CODE)
-//        checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSION_CODE)
         if (allPermissionsGranted()) {
             Log.i("permission_check", "All permissions granted.")
         } else {
@@ -75,15 +77,44 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        fsync = FileSynchronizer(applicationContext, "${filesDir}/",
-            "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/", binding.root.rootView)
-        fsync.run()
-//        Log.i("slam_app", "java path ${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)}")
+        if (isInternetAvailable(applicationContext)) {
+            fsync = FileSynchronizer(
+                applicationContext,
+                "${filesDir}/",
+                "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/",
+                binding.root.rootView
+            )
+            fsync.run()
+        } else
+            Log.w("slam_app", "No internet connection, file sync won't work.")
+
         //Android11存储
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             var intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
             startActivity(intent);
         }
+    }
+
+    fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (connectivityManager != null) {
+            val capabilities =
+                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_WIFI")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     override fun onRequestPermissionsResult(
@@ -140,6 +171,7 @@ class MainActivity : AppCompatActivity() {
         private const val REQUEST_CODE_PERMISSIONS = 666
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.CAMERA,
             Manifest.permission.REQUEST_INSTALL_PACKAGES,
             Manifest.permission.MANAGE_EXTERNAL_STORAGE,
