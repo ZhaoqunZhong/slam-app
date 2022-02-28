@@ -64,24 +64,7 @@ void* gyroThreadWrapper(void *ptr) {
 }
 
 void ImuPublisher::init() {
- 	sensorManager_ = ASensorManager_getInstanceForPackage("com.zhaoqun.slam_app");
-    accelerometer_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED);
-    gyro_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED);
-
-/*	ASensorList sensor_list = nullptr;
-	int sensor_count = ASensorManager_getSensorList(sensorManager_, &sensor_list);
-	LOGI("Found %d sensors.", sensor_count);
-	for (int i = 0; i < sensor_count; i++) {
-		LOGI("Supports sensor %s.", ASensor_getName(sensor_list[i]));
-	}*/
-
     if (use_direct_channel_) {
-        int acc_mode = ASensor_getReportingMode(accelerometer_);
-        LOGI("acc reporting mode : %d", acc_mode); // 0: continuous
-        bool acc_dc_hw = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER);
-        LOGI("acc direct channel hardware buffer %s", acc_dc_hw ? "supported" : "not supported");
-        bool acc_dc_sm = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY);
-        LOGI("acc direct channel shared memory %s", acc_dc_sm ? "supported" : "not supported");
         AHardwareBuffer_Desc bufferDesc {
                 .width = 104,
                 .height = 1,
@@ -111,9 +94,9 @@ void ImuPublisher::init() {
         }
         int fps_req = static_cast<int>(fs["imu_fps"]);
         fs.release();*/
-        int fps_req = 400;
+
         int32_t SENSOR_REFRESH_PERIOD_US;
-        SENSOR_REFRESH_PERIOD_US = int32_t(1e5 / fps_req);
+        SENSOR_REFRESH_PERIOD_US = int32_t(1e5 / imu_fps_);
         looper_ = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
         sensorEventQueue_ = ASensorManager_createEventQueue(sensorManager_, looper_,LOOPER_ID_USER, NULL, NULL);
         ASensorEventQueue_enableSensor(sensorEventQueue_,accelerometer_);
@@ -135,14 +118,35 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
 
     sync_acc_gyr_ = sync_acc_gyr;
     if (imu_freq == 0) {
+        imu_fps_ = 200;
         use_direct_channel_ = true;
         direct_report_level_ = 2;
     } else if (imu_freq == 1)  {
+        imu_fps_ = 400;
         use_direct_channel_ = false;
     } else {
+        imu_fps_ = 800;
         use_direct_channel_ = true;
         direct_report_level_ = 3;
     }
+
+    sensorManager_ = ASensorManager_getInstanceForPackage("com.zhaoqun.slam_app");
+    accelerometer_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED);
+    gyro_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED);
+/*	ASensorList sensor_list = nullptr;
+	int sensor_count = ASensorManager_getSensorList(sensorManager_, &sensor_list);
+	LOGI("Found %d sensors.", sensor_count);
+	for (int i = 0; i < sensor_count; i++) {
+		LOGI("Supports sensor %s.", ASensor_getName(sensor_list[i]));
+	}*/
+    int acc_mode = ASensor_getReportingMode(accelerometer_);
+    LOGI("acc reporting mode : %d", acc_mode); // 0: continuous
+    bool acc_dc_hw = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER);
+    LOGI("acc direct channel hardware buffer %s", acc_dc_hw ? "supported" : "not supported");
+    bool acc_dc_sm = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY);
+    LOGI("acc direct channel shared memory %s", acc_dc_sm ? "supported" : "not supported");
+    if (!acc_dc_hw && !acc_dc_sm)
+        use_direct_channel_ = false;
 
     imu_publish_on_ = true;
     if(use_direct_channel_) {

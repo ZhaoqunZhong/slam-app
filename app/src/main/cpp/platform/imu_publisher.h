@@ -62,6 +62,7 @@ class ImuPublisher {
 	bool sync_acc_gyr_ = true;
 	int direct_report_level_ = 2;
 	bool started_ = false;
+	int imu_fps_;
 public:
 	ImuPublisher(void (*fimu) (imu_msg &), void (*facc)(acc_msg &), void (*fgyro)(gyr_msg &)) {
 		imu_callback_ = fimu;
