@@ -637,16 +637,6 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
         ACameraMetadata *metadataObj;
         ACameraManager_getCameraCharacteristics(cam_manager, id, &metadataObj);
 
-        // check if this camera supports 60hz by AE
-        ACameraMetadata_const_entry ae_range;
-        ACameraMetadata_getConstEntry(metadataObj,
-                                      ACAMERA_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, &ae_range);
-        for (int n = 0; n < ae_range.count; n++) {
-            int32_t min = ae_range.data.i32[n + 0];
-            int32_t max = ae_range.data.i32[n + 1];
-            LOGI("AE range: min=%d vs max=%d", min, max);
-        }
-
         // filter logic cams
         size_t physical_cam_nums;
         const char *const *physical_cam_ids;
@@ -669,6 +659,24 @@ std::vector <std::string> CamPublisher::searchSlamCams() {
                 lensInfo.data.u8[0]);
 
         if (facing != ACAMERA_LENS_FACING_BACK)
+            continue;
+
+        // check if this camera supports 60hz by AE
+        ACameraMetadata_const_entry ae_range;
+        ACameraMetadata_getConstEntry(metadataObj,
+                                      ACAMERA_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, &ae_range);
+        //LOG(INFO) << "----------cam " << std::string(id) << " AE range----------";
+        bool support_60hz = false;
+        for (int n = 0; n < ae_range.count; n++) {
+            int32_t min = ae_range.data.i32[n + 0];
+            int32_t max = ae_range.data.i32[n + 1];
+            //LOGI("AE range: min=%d vs max=%d", min, max);
+            if (max == 60) {
+                support_60hz = true;
+                break;
+            }
+        }
+        if (!support_60hz)
             continue;
 
         // select format and resolution
