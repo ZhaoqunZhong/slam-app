@@ -366,7 +366,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
      * @param context
      * @param apkPath
      */
-    fun installApk(context: Context, apkPath: String?) {
+    public fun installApk(context: Context, apkPath: String?) {
         try {
             /**
              * provider

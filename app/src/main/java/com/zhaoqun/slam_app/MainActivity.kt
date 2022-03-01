@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_settings) {
 /*            val apk_path = "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/slam_app.apk"
-            installApk(applicationContext, apk_path)*/
+            fsync.installApk(applicationContext, apk_path)*/
         }
         return super.onOptionsItemSelected(item)
     }
