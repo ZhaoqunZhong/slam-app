@@ -31,6 +31,7 @@ public:
     virtual ~PerfMonitor();
     void update();
     inline int getFPS() { return static_cast<int>(current_FPS_); }
+    void reset();
 private:
     static const int kNumSamples = 30;
     float current_FPS_;

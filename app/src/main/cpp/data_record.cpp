@@ -55,6 +55,10 @@ JNIEXPORT void JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEnv *env,
                                                                            jobject thiz,
                                                                            jstring config) {
+    perf_rgb.reset();
+    perf_acc.reset();
+    perf_gyr.reset();
+
     std::string config_string = env->GetStringUTFChars(config, nullptr);
     LOG(INFO) << "record config string " << config_string;
 
@@ -91,7 +95,11 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
 
     //Create data folder for this record.
     std::string data_folder_name = folder_name;
-    if (post_with_time || data_folder_name.empty())
+    if (data_folder_name.empty()) {
+        data_folder_name = "default";
+        config_j["folder_name"] = data_folder_name;
+    }
+    if (post_with_time)
         data_folder_name += time_postfix;
     data_folder_name += "/";
     // LOG(INFO) << "data folder name " << data_folder_name;

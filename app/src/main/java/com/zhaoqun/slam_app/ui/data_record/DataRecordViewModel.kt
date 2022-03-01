@@ -7,9 +7,9 @@ import kotlinx.serialization.Serializable
 
 class DataRecordViewModel : ViewModel() {
 
-    val _folder_name = MutableLiveData<String>()
+    val _folder_name = MutableLiveData<String>().apply { value = "" }
 
-    val _post_with_time = MutableLiveData<Boolean>().apply { value = true }
+    val _post_with_time = MutableLiveData<Boolean>().apply { value = false }
 
     val _record_cam = MutableLiveData<Boolean>().apply { value = true }
 
