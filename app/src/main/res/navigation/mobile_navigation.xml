@@ -22,4 +22,10 @@
         android:name="com.zhaoqun.slam_app.ui.slam.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
+
+    <fragment
+        android:id="@+id/nav_about"
+        android:name="com.zhaoqun.slam_app.ui.about.AboutFragment"
+        android:label="@string/menu_about"
+        tools:layout="@layout/fragment_about" />
 </navigation>

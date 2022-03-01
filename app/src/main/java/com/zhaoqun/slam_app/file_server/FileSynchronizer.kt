@@ -68,7 +68,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
 
             file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "Syncing files with server...", Snackbar.LENGTH_INDEFINITE)
             file_snackbar.setBackgroundTint(Color.parseColor("#FF0000FF"))
-            file_snackbar.show()
+//            file_snackbar.show()
 
             //-----------------Get Baidu Netdisk access token from gitee--------------------
             val acquire_token_call = netDiskAPI.downloadFileWithUrl("https://gitee.com/zhaoqun-zhong/slam_app_file_server/raw/master/access_token.txt")
@@ -117,7 +117,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                 file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "This phone model is not supported yet.",
                     Snackbar.LENGTH_INDEFINITE)
                 file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
-                file_snackbar.show()
+//                file_snackbar.show()
 
                 // Send phone model to server.
                 val upload_model_call = netDiskAPI.uploadCreate("create", access_token,
@@ -132,7 +132,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                 file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "This phone model has been sent to server, check back later.",
                     Snackbar.LENGTH_INDEFINITE)
                 file_snackbar.setBackgroundTint(Color.parseColor("#FFFF0000"))
-                file_snackbar.show()
+//                file_snackbar.show()
 /*
                 // Test upload file to server
                 val upload_file_call = netDiskUploadAPI.uploadFile("upload", access_token, "apps/SLAM_APP/config.yaml",
@@ -191,6 +191,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                 val download_apk_call = netDiskAPI.downloadFileWithUrl(apk_file_dlink + "&access_token=${access_token}")
                 val download_apk_res = download_apk_call.execute()
                 if (download_apk_res.code() == 200) {
+                    file_snackbar.dismiss()
                     writeResponseBodyToDisk(download_apk_res.body()!!, download_path, "slam_app.apk")
 /*                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to app's folder.",
                         Snackbar.LENGTH_SHORT)
@@ -246,7 +247,7 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
 //            file_snackbar.dismiss()
             file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "File sync success.", Snackbar.LENGTH_SHORT)
             file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
-            file_snackbar.show()
+//            file_snackbar.show()
         }
     }
 

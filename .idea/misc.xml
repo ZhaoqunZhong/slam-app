@@ -12,6 +12,7 @@
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/activity_main.xml" value="0.3170289855072464" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/app_bar_main.xml" value="0.3170289855072464" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/content_main.xml" value="0.34103260869565216" />
+        <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/fragment_about.xml" value="0.32563405797101447" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/fragment_data.xml" value="0.33" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/fragment_gallery.xml" value="0.3170289855072464" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/layout/fragment_home.xml" value="0.3170289855072464" />
@@ -21,6 +22,8 @@
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/menu/main.xml" value="0.36614583333333334" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.38229166666666664" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.38229166666666664" />
+        <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_vs.xml" value="0.38229166666666664" />
+        <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_vs_round.xml" value="0.38229166666666664" />
         <entry key="..\:/Users/zhongzhaoqun/Documents/GitHub/slam-app/app/src/main/res/xml/file_paths.xml" value="0.30344202898550726" />
       </map>
     </option>

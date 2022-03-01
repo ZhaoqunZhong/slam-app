@@ -1,15 +1,16 @@
 <resources>
-    <string name="app_name">slam_app</string>
+    <string name="app_name">SLAM APP</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Version</string>
-    <string name="nav_header_subtitle">zhegushao@orbbec.com</string>
+    <string name="nav_header_subtitle">zhongzhaoqun1991@outlook.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Setting</string>
 
     <string name="menu_home">Data record</string>
     <string name="menu_gallery">Image processing</string>
-    <string name="menu_slideshow">SLAM</string>
+    <string name="menu_slideshow">Vio</string>
+    <string name="menu_about">About the app</string>
 
     <string-array name="cam_res">
         <item >640*480</item>
