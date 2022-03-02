@@ -191,8 +191,8 @@ class FileSynchronizer(val context: Context, val app_path: String, val download_
                 val download_apk_call = netDiskAPI.downloadFileWithUrl(apk_file_dlink + "&access_token=${access_token}")
                 val download_apk_res = download_apk_call.execute()
                 if (download_apk_res.code() == 200) {
-                    file_snackbar.dismiss()
                     writeResponseBodyToDisk(download_apk_res.body()!!, download_path, "slam_app.apk")
+                    file_snackbar.dismiss()
 /*                    file_snackbar = Snackbar.make(view.findViewById(R.id.filesyncprompt), "New apk file has been downloaded to app's folder.",
                         Snackbar.LENGTH_SHORT)
                     file_snackbar.setBackgroundTint(Color.parseColor("#FF00FF00"))
