@@ -11,7 +11,7 @@ class AboutFragmentViewModel : ViewModel() {
                 "Email: zhongzhaoqun1991@outlook.com \n" +
                 "\n" +
                 "This app is meant to be a tool for collecting data, testing and visualizing SLAM algorithms(especially vio) " +
-                "on Android phones. Minimum supported Android version is 10. \n" +
+                "on Android devices. Minimum supported Android version is 10. \n" +
                 "\n" +
                 "Wiki page about how to use the app can be found at \n" +
                 "--- https://www.cnblogs.com/ZhaoqunZhong/p/15949472.html --- \n" +

@@ -110,10 +110,9 @@ class DataRecordFragment : Fragment() {
     }
 
     fun prepareDefaultOptions () {
-        dataRecordViewModel._folder_name.observe(viewLifecycleOwner, Observer {
-            binding.folderName.setText(it)
-        })
-        binding.folderName.setOnEditorActionListener{
+        dataRecordViewModel._record_on.observe(viewLifecycleOwner, {binding.recordButton.isChecked = it })
+        dataRecordViewModel._folder_name.observe(viewLifecycleOwner, Observer {binding.folderName.setText(it)})
+/*        binding.folderName.setOnEditorActionListener{
                 v, actionId, event ->
             return@setOnEditorActionListener when (actionId) {
                 EditorInfo.IME_ACTION_DONE -> {
@@ -122,7 +121,7 @@ class DataRecordFragment : Fragment() {
                 }
                 else -> false
             }
-        }
+        }*/
         dataRecordViewModel._post_with_time.observe(viewLifecycleOwner, {binding.postTime.isChecked = it })
         dataRecordViewModel._record_cam.observe(viewLifecycleOwner, {binding.recordCam.isChecked = it})
         dataRecordViewModel._save_imgs.observe(viewLifecycleOwner, {binding.saveImgs.isChecked = it})

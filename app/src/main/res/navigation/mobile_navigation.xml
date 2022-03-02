@@ -9,19 +9,30 @@
         android:id="@+id/nav_home"
         android:name="com.zhaoqun.slam_app.ui.data_record.DataRecordFragment"
         android:label="@string/menu_home"
-        tools:layout="@layout/fragment_data" />
+        tools:layout="@layout/fragment_data" >
+<!--        <action
+            android:id="@+id/action_nav_home_to_nav_slideshow"
+            app:destination="@id/nav_slideshow"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="true"/>
+        <action
+            android:id="@+id/action_nav_home_to_nav_about"
+            app:destination="@id/nav_about"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="true"/>-->
+    </fragment>
 
-    <fragment
+<!--    <fragment
         android:id="@+id/nav_gallery"
         android:name="com.zhaoqun.slam_app.ui.image_processing.GalleryFragment"
         android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        tools:layout="@layout/fragment_gallery" />-->
 
     <fragment
         android:id="@+id/nav_slideshow"
         android:name="com.zhaoqun.slam_app.ui.slam.SlideshowFragment"
         android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_slideshow"/>
 
     <fragment
         android:id="@+id/nav_about"

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.serialization.Serializable
 
 class DataRecordViewModel : ViewModel() {
+    val _record_on = MutableLiveData<Boolean>().apply { value = false }
 
     val _folder_name = MutableLiveData<String>().apply { value = "" }
 

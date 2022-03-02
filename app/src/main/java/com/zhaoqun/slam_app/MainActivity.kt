@@ -33,6 +33,7 @@ import android.widget.Toast
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import android.view.KeyEvent
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -71,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow, R.id.nav_about
+                R.id.nav_home, /*R.id.nav_gallery, */R.id.nav_slideshow, R.id.nav_about
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -166,6 +167,18 @@ class MainActivity : AppCompatActivity() {
 //            Toast.makeText(this@MainActivity, permission + " permission already granted", Toast.LENGTH_SHORT).show()
         }
     }*/
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            var intent = Intent(Intent.ACTION_MAIN);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            startActivity(intent);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 666
