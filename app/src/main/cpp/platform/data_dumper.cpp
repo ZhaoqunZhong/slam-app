@@ -137,8 +137,16 @@ void DataDumper::stop() {
         bag_packer_.close();
 }
 
-void testfunc(std::string &filename, cv::Mat &mat) {
-    cv::imwrite(filename, mat);
+struct imgSaveParas {
+    imgSaveParas(std::string name, cv::Mat mat) : img_name(name), mat_to_save(mat) {};
+    std::string img_name;
+    cv::Mat mat_to_save;
+};
+void* threadImgSave(void *paras_ptr) {
+    imgSaveParas *paras = (imgSaveParas*)paras_ptr;
+    cv::imwrite(paras->img_name, paras->mat_to_save);
+    if (paras_ptr)
+        delete paras_ptr;
 };
 
 void DataDumper::DumpThreadFunction() {
@@ -223,14 +231,22 @@ void DataDumper::DumpThreadFunction() {
                 std::string folder = dump_path_ + "rgb_images/";
                 std::string filename = folder + std::to_string(msg.ts) + ".png";
 
-                cv::imwrite(filename, msg.yMat);
+                // cv::imwrite(filename, msg.yMat);
 
                 // thread function version of saving image file
-/*                auto f = [](std::string filename, cv::Mat mat) {
+                auto f = [](std::string filename, cv::Mat mat) {
                     cv::imwrite(filename, mat);
                 };
-                std::thread t(f, std::ref(filename), msg.yMat);
-                t.detach();*/
+                std::thread t(f, std::ref(filename), msg.yMat.clone());
+                t.detach();
+
+                /// doesn't work, prompt img is empty
+                // shared_ptr<imgSaveParas> paras = std::make_shared<imgSaveParas>(filename, msg.yMat);
+                // imgSaveParas paras(filename, msg.yMat);
+                // imgSaveParas *paras = new imgSaveParas(filename, msg.yMat.clone());
+                // pthread_t t;
+                // pthread_create(&t, nullptr, threadImgSave, (void*)&paras);
+                // pthread_detach(t);
             }
 
             /// rosbag
