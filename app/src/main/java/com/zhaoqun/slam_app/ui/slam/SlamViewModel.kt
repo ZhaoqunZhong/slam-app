@@ -1,0 +1,13 @@
+package com.zhaoqun.slam_app.ui.slam
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+
+class SlamViewModel : ViewModel() {
+    val _cam_res = MutableLiveData<Int>().apply { value = 0 } // 0: 640*480, 1: 1280*720, 2: 1920*1080
+    val _enable_60hz = MutableLiveData<Boolean>().apply { value = false }
+    val _cam_stream_freq = MutableLiveData<String>()
+    val _imu_stream_freq = MutableLiveData<String>()
+    val _pose_freq = MutableLiveData<String>()
+}

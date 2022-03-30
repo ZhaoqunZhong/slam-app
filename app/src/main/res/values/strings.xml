@@ -9,7 +9,7 @@
 
     <string name="menu_home">Data record</string>
     <string name="menu_gallery">Image processing</string>
-    <string name="menu_slideshow">Vio</string>
+    <string name="menu_slam">Slam</string>
     <string name="menu_about">About the app</string>
 
     <string-array name="cam_res">
@@ -28,7 +28,7 @@
         <item >gyr in front</item>
     </string-array>
 
-    <string-array name="cam_id">
+<!--    <string-array name="cam_id">
         <item >0</item>
         <item >1</item>
         <item >2</item>
@@ -38,6 +38,6 @@
         <item >250</item>
         <item >500</item>
         <item >1000</item>
-    </string-array>
+    </string-array>-->
 
 </resources>

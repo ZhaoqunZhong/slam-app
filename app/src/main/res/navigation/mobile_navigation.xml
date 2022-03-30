@@ -30,9 +30,9 @@
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.zhaoqun.slam_app.ui.slam.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow"/>
+        android:name="com.zhaoqun.slam_app.ui.slam.SlamFragment"
+        android:label="@string/menu_slam"
+        tools:layout="@layout/fragment_slam"/>
 
     <fragment
         android:id="@+id/nav_about"

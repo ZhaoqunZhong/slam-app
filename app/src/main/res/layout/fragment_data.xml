@@ -11,6 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="378dp"
         app:layout_constraintEnd_toStartOf="@+id/divider_vertical"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -55,7 +56,6 @@
         android:id="@+id/imu_fps"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:entries="@array/imu_fps"
         app:layout_constraintStart_toEndOf="@+id/cam_preview"
         app:layout_constraintTop_toBottomOf="@+id/textView4"
         tools:ignore="SpeakableTextPresentCheck" />
@@ -131,7 +131,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:dropDownWidth="match_parent"
-        android:entries="@array/cam_id"
         app:layout_constraintStart_toEndOf="@+id/divider_vertical"
         app:layout_constraintTop_toBottomOf="@+id/textView3" />
 

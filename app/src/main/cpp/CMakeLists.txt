@@ -39,3 +39,32 @@ target_include_directories(data_record PRIVATE
         lib-includes
         platform/rosbag/include)
 
+
+#---------------------------vio------------------------------------
+add_subdirectory(algorithm)
+
+add_library(slam SHARED
+        slam.cpp
+        platform/cam_publisher.cpp
+        platform/ndk_camera_utils/ndk_utils.cpp
+        platform/imu_publisher.cpp
+        platform/image_preview.cpp
+        platform/native_debug.cpp
+        platform/perf_monitor.cpp
+        platform/map_drawer.cpp)
+
+target_link_libraries(slam PRIVATE
+        android
+        camera2ndk
+        log
+        mediandk
+        GLESv3
+        ${jniLibs_DIR}/libopencv_java4.so
+        ${jniLibs_DIR}/libglog.so
+    #SLAM module
+        vio
+        )
+
+target_include_directories(slam PRIVATE
+        lib-includes
+        )
