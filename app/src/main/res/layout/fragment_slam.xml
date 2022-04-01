@@ -80,7 +80,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imu_fps_slam" />
+        app:layout_constraintTop_toBottomOf="@+id/imu_fps_slam"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/start_time"
@@ -118,7 +119,7 @@
         app:layout_constraintTop_toBottomOf="@+id/preview_slam" />
 
     <TextView
-        android:id="@+id/pose_fps"
+        android:id="@+id/pose_fps_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Pose fps: "
@@ -132,5 +133,33 @@
         android:text="Imu frequency"
         app:layout_constraintStart_toStartOf="@+id/textView3"
         app:layout_constraintTop_toBottomOf="@+id/cam60hz_slam" />
+
+    <TextView
+        android:id="@+id/cam_stream_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/imu_fps_slam"
+        app:layout_constraintStart_toEndOf="@+id/cam_fps_slam"
+        app:layout_constraintTop_toTopOf="@+id/cam_fps_slam" />
+
+    <TextView
+        android:id="@+id/imu_stream_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imu_fps_slam"
+        app:layout_constraintStart_toEndOf="@+id/imu_fps_slam"
+        app:layout_constraintTop_toBottomOf="@+id/cam_fps_slam" />
+
+    <TextView
+        android:id="@+id/pose_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/pose_fps_label"
+        app:layout_constraintTop_toTopOf="@+id/pose_fps_label" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

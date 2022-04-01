@@ -18,14 +18,14 @@
 #include "nlohmann/json.hpp"
 
 DataDumper dataDumper;
-PerfMonitor perf_rgb, perf_acc, perf_gyr, perf_imu;
+PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu;
 
 void rgbCallback(rgb_msg &msg) {
    dataDumper.dumpRgbImage(msg);
 
    updatePreviewMat(msg.yMat, true);
 
-   perf_rgb.update();
+   perf_cam.update();
 }
 
 void imuCallback(imu_msg &msg) {
@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEnv *env,
                                                                            jobject thiz,
                                                                            jstring config) {
-    perf_rgb.reset();
+    perf_cam.reset();
     perf_acc.reset();
     perf_gyr.reset();
 
@@ -183,7 +183,7 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_sendSurfaceToJNI(J
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getCamFps(JNIEnv *env, jobject thiz) {
-    return perf_rgb.getFPS();
+    return perf_cam.getFPS();
 }
 extern "C"
 JNIEXPORT jint JNICALL

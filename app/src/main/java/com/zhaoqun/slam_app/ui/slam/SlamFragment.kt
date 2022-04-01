@@ -1,11 +1,11 @@
 package com.zhaoqun.slam_app.ui.slam
 
 import android.R
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
@@ -14,13 +14,17 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.zhaoqun.slam_app.databinding.FragmentSlamBinding
-import com.zhaoqun.slam_app.ui.data_record.DataRecordViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 class SlamFragment : Fragment() {
     private val slamViewModel: SlamViewModel by activityViewModels()
@@ -44,6 +48,7 @@ class SlamFragment : Fragment() {
         val root: View = binding.root
 
         prepareDefaultOptions()
+        backgroundDataTask()
 
         binding.camResSlam.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -63,12 +68,32 @@ class SlamFragment : Fragment() {
             override fun onNothingSelected(p0: AdapterView<*>?) { }
         }
 
+        binding.previewSlam.holder.addCallback(
+            object : SurfaceHolder.Callback {
+                override fun surfaceCreated(holder: SurfaceHolder) { }
+                override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+//                    Log.i(debug_tag, "cam preview surfacechanged, width $width, height $height")
+                    sendSurfaceToJNI(holder.surface)
+                }
+                override fun surfaceDestroyed(holder: SurfaceHolder) { }
+            }
+        )
+
+        binding.startSlam.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                val config_string = serializeSlamDataConfig()
+                startSlamJNI(config_string)
+            } else
+                stopSlamJNI()
+        }
+
         return root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        stopSlamJNI()
     }
 
 
@@ -76,6 +101,9 @@ class SlamFragment : Fragment() {
     fun prepareDefaultOptions () {
         slamViewModel._cam_res.observe(viewLifecycleOwner, {binding.camResSlam.setSelection(it)})
         slamViewModel._enable_60hz.observe(viewLifecycleOwner, {binding.cam60hzSlam.isChecked = it})
+        slamViewModel._cam_stream_freq.observe(viewLifecycleOwner, {binding.camStreamFps.text = it})
+        slamViewModel._imu_stream_freq.observe(viewLifecycleOwner, {binding.imuStreamFps.text = it})
+        slamViewModel._pose_freq.observe(viewLifecycleOwner, {binding.poseFps.text = it})
 
         var cam_ids = arrayListOf<String>("-1")
         var imu_freqs = arrayListOf<String>("0")
@@ -109,8 +137,38 @@ class SlamFragment : Fragment() {
         binding.imuFreqSlam.setAdapter(aa1)
     }
 
+    fun serializeSlamDataConfig(): String {
+        var slam_config = SlamDataConfig(
+//            "${context?.filesDir.toString()}/",
+            "${context?.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/",
+            binding.camIdSlam.selectedItem.toString(),
+            binding.camResSlam.selectedItemPosition,
+            binding.cam60hzSlam.isChecked,
+            binding.imuFreqSlam.selectedItemPosition
+        )
+        val slam_config_string = json.encodeToString(slam_config)
+        return slam_config_string
+    }
+
+    fun backgroundDataTask() {
+        lifecycleScope.launch(context = Dispatchers.IO){
+            while(true){
+                Thread.sleep(100)
+                slamViewModel._cam_stream_freq.postValue(getCamFps().toString() + "hz")
+                slamViewModel._imu_stream_freq.postValue(getImuFps().toString() + "hz")
+                slamViewModel._pose_freq.postValue(getPoseFps().toString() + "hz")
+            }
+        }
+    }
+
     external fun getBackCamIDs() : Array<String>
     external fun getImuFreqs() : Array<String>
+    external fun sendSurfaceToJNI(cam_sf: Surface)
+    external fun startSlamJNI(config: String)
+    external fun stopSlamJNI()
+    external fun getCamFps() : Int
+    external fun getImuFps() : Int
+    external fun getPoseFps() : Int
 
     companion object {
         // Used to load the 'native-lib' library on application startup.
