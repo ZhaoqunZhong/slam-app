@@ -79,9 +79,9 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         if (isInternetAvailable(applicationContext)) {
-            fsync = FileSynchronizer(
-                applicationContext,
-                "${filesDir}/",
+            fsync = FileSynchronizer(applicationContext,
+//                "${filesDir}/",
+                "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/",
                 "${getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()}/",
                 binding.root.rootView
             )

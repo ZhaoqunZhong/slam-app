@@ -145,7 +145,8 @@ class DataRecordFragment : Fragment() {
             val cam_ids: ArrayList<String>,
             val imu_freqs: ArrayList<String>
         )
-        val app_dir = activity?.filesDir.toString()
+//        val app_dir = activity?.filesDir.toString()
+        val app_dir = activity?.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString()
         val sensor_info_file = File("$app_dir/vi_sensor_info.json")
         if (sensor_info_file.exists()) {
             Log.i(debug_tag, "Found vi sensor info file, read from file.")
