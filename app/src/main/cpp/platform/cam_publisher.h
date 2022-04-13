@@ -62,7 +62,7 @@ private:
     //int64_t rgb_exposure_;
     //int32_t rgb_sensitivity_;
     float rgb_focus_;
-    //float rgb_exposure_percent_, rgb_sensitivity_percent_;
+    float rgb_exposure_percent_, rgb_sensitivity_percent_;
     std::vector<int32_t> rgb_ae_fps_range_;
 
 

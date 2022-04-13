@@ -408,11 +408,11 @@ void rgb_onCaptureCompleted(
 
     ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_ROLLING_SHUTTER_SKEW, &entry);
     rgb_readout_time = entry.data.i64[0];
-    LOG_FIRST_N(INFO,1) << "rgb_readout_time " << rgb_readout_time;
+    LOG_FIRST_N(INFO,10) << "rgb_readout_time " << rgb_readout_time;
 
     ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_EXPOSURE_TIME, &entry);
     int64_t exposure_time = entry.data.i64[0];
-    LOG_FIRST_N(INFO,1) << "rgb_exposure_time " << exposure_time;
+    LOG_FIRST_N(INFO,10) << "rgb_exposure_time " << exposure_time;
 //    rgb_realtime_exposure = exposure_time;
 
 //    ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_FRAME_DURATION, &entry);
@@ -491,12 +491,10 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
     cv::FileStorage fs(file_name, cv::FileStorage::READ);
     rgb_width_ = static_cast<int>(fs["rgb_width"]);
     rgb_height_ = static_cast<int>(fs["rgb_height"]);*/
-/*
-    rgb_exposure_ = static_cast<int>(fs["rgb_exposure"]);
+/*    rgb_exposure_ = static_cast<int>(fs["rgb_exposure"]);
     rgb_sensitivity_ = static_cast<int>(fs["rgb_sensitivity"]);
     rgb_exposure_percent_ = static_cast<float>(fs["rgb_req_exposure_percent"]);
-    rgb_sensitivity_percent_ = static_cast<float>(fs["rgb_req_sensitivity_percent"]);
-    */
+    rgb_sensitivity_percent_ = static_cast<float>(fs["rgb_req_sensitivity_percent"]);*/
 /*    rgb_focus_ = static_cast<float>(fs["rgb_focus"]);
     LOGW("rgb request focus %f", rgb_focus_);*/
     // depth_width_ = static_cast<int>(fs["depth_req_width"]);
@@ -508,14 +506,6 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
     rgb_cam_id_ = cam_id;
     rgb_width_ = width;
     rgb_height_ = height;
-    rgb_focus_ = 0.0;
-    if (allow60hz) {
-        std::vector<int32_t> range{30, 60};
-        rgb_ae_fps_range_ = range;
-    } else {
-        std::vector<int32_t> range{30, 30};
-        rgb_ae_fps_range_ = range;
-    }
 
     ACameraManager_openCamera(cameraMgr_, rgb_cam_id_.c_str(), &cameraDeviceCallbacks, &rgb_cam_);
     rgb_imgReader_ = createImageReader(rgb_width_, rgb_height_, "rgb");
@@ -525,7 +515,9 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
     ACameraOutputTarget_create(rgb_imageWindow_, &rgb_outputTarget_);
     ACameraDevice_createCaptureRequest(rgb_cam_, TEMPLATE_PREVIEW, &rgb_capRequest_);
     ACaptureRequest_addTarget(rgb_capRequest_, rgb_outputTarget_);
-/*
+
+    rgb_exposure_percent_ = 0.02;
+    rgb_sensitivity_percent_ = 0.01;
     ACameraMetadata *metadataObj;
     ACameraManager_getCameraCharacteristics(cameraMgr_, rgb_cam_id_.c_str(), &metadataObj);
     ACameraMetadata_const_entry entry = {0};
@@ -537,21 +529,28 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
     int32_t minSensitivity = entry.data.i32[0];
     int32_t maxSensitivity = entry.data.i32[1];
     int32_t sensitivity_ = minSensitivity + (maxSensitivity - minSensitivity) * rgb_sensitivity_percent_;
-
-    CALL_METADATA(getConstEntry(metadataObj, ACAMERA_SENSOR_ORIENTATION, &entry));
-    rgb_sensor_orientation = entry.data.i32[0];
+/*    CALL_METADATA(getConstEntry(metadataObj, ACAMERA_SENSOR_ORIENTATION, &entry));
+    rgb_sensor_orientation = entry.data.i32[0];*/
     ACameraMetadata_free(metadataObj);
-    */
-    uint8_t aeMode = ACAMERA_CONTROL_AE_MODE_ON;
-//    uint8_t aeMode = ACAMERA_CONTROL_AE_MODE_OFF;
-    CALL_REQUEST(setEntry_u8(rgb_capRequest_, ACAMERA_CONTROL_AE_MODE, 1, &aeMode));
-/*    CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_));
-    CALL_REQUEST(setEntry_i64(rgb_capRequest_, ACAMERA_SENSOR_EXPOSURE_TIME, 1, &exposure_));*/
-//    int32_t kFpsRange[2] = {30, 60};
-//     fs["rgb_AE_fps_range"] >> rgb_ae_fps_range_;
-    CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_CONTROL_AE_TARGET_FPS_RANGE, 2,
-                              rgb_ae_fps_range_.data()));
 
+    uint8_t aeMode;
+    if (allow60hz) {
+        std::vector<int32_t> range{30, 60};
+        rgb_ae_fps_range_ = range;
+        aeMode = ACAMERA_CONTROL_AE_MODE_ON;
+        CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_CONTROL_AE_TARGET_FPS_RANGE, 2,
+                                  rgb_ae_fps_range_.data()));
+    } else {
+        // std::vector<int32_t> range{30, 30};
+        // rgb_ae_fps_range_ = range;
+        aeMode = ACAMERA_CONTROL_AE_MODE_OFF;
+        // exposure_ = 10000000;
+        CALL_REQUEST(setEntry_i32(rgb_capRequest_, ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_));
+        CALL_REQUEST(setEntry_i64(rgb_capRequest_, ACAMERA_SENSOR_EXPOSURE_TIME, 1, &exposure_));
+    }
+    CALL_REQUEST(setEntry_u8(rgb_capRequest_, ACAMERA_CONTROL_AE_MODE, 1, &aeMode));
+
+    rgb_focus_ = 0.0;
     uint8_t afModeOff = ACAMERA_CONTROL_AF_MODE_OFF;
     CALL_REQUEST(setEntry_u8(rgb_capRequest_, ACAMERA_CONTROL_AF_MODE, 1, &afModeOff));
     CALL_REQUEST(setEntry_float(rgb_capRequest_, ACAMERA_LENS_FOCUS_DISTANCE, 1, &rgb_focus_));

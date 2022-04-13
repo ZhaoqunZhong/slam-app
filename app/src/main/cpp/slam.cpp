@@ -38,8 +38,6 @@ ImagePreviewer previewer;
 MapDrawer mapDrawer;
 
 
-
-
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_zhaoqun_slam_1app_ui_slam_MyGLRenderer_drawFrameJNI(JNIEnv *env, jobject thiz,
