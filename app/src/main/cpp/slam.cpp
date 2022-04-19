@@ -8,17 +8,19 @@
 #include "platform/map_drawer.h"
 #include "glog/logging.h"
 #include "nlohmann/json.hpp"
+#include "algorithm/algorithm_interface.h"
 
 PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu, perf_pose;
+AlgorithmInterface algo_inter;
 
 void rgbCallback(rgb_msg &msg) {
     updatePreviewMat(msg.yMat, true);
-
+    algo_inter.rgbCallback(msg);
     perf_cam.update();
 }
 
 void imuCallback(imu_msg &msg) {
-
+    algo_inter.imuCallback(msg);
     perf_imu.update();
 }
 
@@ -97,15 +99,40 @@ Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_startSlamJNI(JNIEnv *env, jobjec
     bool enable60hz = config_j["enable60hz"];
     int imu_freq = config_j["imu_freq"];
 
-    std::map<int, std::pair<int, int>> cam_res {
-            {0, std::make_pair(640, 480)},
-            {1, std::make_pair(1280, 720)},
-            {2, std::make_pair(1920, 1080)}
-    };
-    std::pair<int,int> res = cam_res[camera_resolution];
-    camPublisher.start(camera_id, res.first, res.second, enable60hz);
-    previewer.start(res.second, res.first, preview_native_window);
-    imuPublisher.start(imu_freq, true);
+    std::filesystem::path slam_path("/sdcard/slam_app/SlamRun/");
+    if (std::filesystem::exists(slam_path)) {
+    } else {
+        std::filesystem::create_directories(slam_path);
+    }
+    if (std::filesystem::exists("/sdcard/slam_app/SlamRun/config.yaml")) {
+    } else {
+        // Copy slam run config file from Downloads folder to sdcard.
+        std::filesystem::copy_file(internal_folder_path + "config.yaml",
+                                   "/sdcard/slam_app/SlamRun/config.yaml");
+    }
+
+    std::string file_name = "sdcard/slam_app/SlamRun/config.yaml";
+    cv::FileStorage fs;
+    try {
+        fs.open(file_name, cv::FileStorage::READ);
+    } catch (const cv::Exception &e) {
+        LOG(ERROR) << e.what();
+    }
+    int run_offline = static_cast<int>(fs["run_offline"]);
+    if (run_offline) {
+    } else {
+        std::map<int, std::pair<int, int>> cam_res {
+                {0, std::make_pair(640, 480)},
+                {1, std::make_pair(1280, 720)},
+                {2, std::make_pair(1920, 1080)}
+        };
+        std::pair<int,int> res = cam_res[camera_resolution];
+        camPublisher.start(camera_id, res.first, res.second, enable60hz);
+        previewer.start(res.second, res.first, preview_native_window);
+        imuPublisher.start(imu_freq, true);
+    }
+
+    algo_inter.start();
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -113,6 +140,8 @@ Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_stopSlamJNI(JNIEnv *env, jobject
     camPublisher.stop();
     previewer.stop();
     imuPublisher.stop();
+
+    algo_inter.stop();
 }
 extern "C"
 JNIEXPORT jint JNICALL

@@ -62,7 +62,7 @@ target_link_libraries(slam PRIVATE
         ${jniLibs_DIR}/libopencv_java4.so
         ${jniLibs_DIR}/libglog.so
     #SLAM module
-        vio
+        slam_algorithm
         )
 
 target_include_directories(slam PRIVATE
