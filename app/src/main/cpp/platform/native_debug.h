@@ -30,7 +30,7 @@ extern std::vector<std::array<float,3>> traj_to_draw, traj_gt;
 extern std::vector<std::array<float,6>> map_points;
 extern std::vector<std::array<float,3>> mono_map_points;
 extern std::vector<Eigen::Matrix4d> key_frames;
-extern void updatePoseForDrawing (Eigen::Matrix4d &pose);
+extern void updatePose4x4ForDrawing (Eigen::Matrix4d &pose);
 extern PerfMonitor pose_fps;
 extern void updatePoseForDrawing (Eigen::Vector3d &p, Eigen::Quaterniond &q);
 extern void updateTestPoseForDrawing (Eigen::Matrix4f &pose);

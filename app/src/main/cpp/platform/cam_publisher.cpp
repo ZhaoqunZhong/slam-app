@@ -517,7 +517,7 @@ void CamPublisher::start(std::string cam_id, int width, int height, bool allow60
     ACaptureRequest_addTarget(rgb_capRequest_, rgb_outputTarget_);
 
     rgb_exposure_percent_ = 0.02;
-    rgb_sensitivity_percent_ = 0.01;
+    rgb_sensitivity_percent_ = 0.02;
     ACameraMetadata *metadataObj;
     ACameraManager_getCameraCharacteristics(cameraMgr_, rgb_cam_id_.c_str(), &metadataObj);
     ACameraMetadata_const_entry entry = {0};

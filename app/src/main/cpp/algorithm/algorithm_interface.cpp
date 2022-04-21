@@ -30,7 +30,7 @@ void AlgorithmInterface::rgbCallback(rgb_msg &msg) {
         return;
     if (slam_ == nullptr)
         return;
-
+    // updatePreviewMat(msg.yMat, true);
     slam_add_image(slam_, msg.ts, msg.yMat.cols, msg.yMat.rows, msg.yMat.data);
 }
 
@@ -78,6 +78,22 @@ void *threadRunner(void *ptr) {
     return nullptr;
 }
 
+void previewCallback(slam_processed_image *image) {
+    cv::Mat preview(image->image_height, image->image_width, CV_8UC3, image->image_data);
+    updatePreviewMat(preview.clone(), true);
+}
+
+void poseCallback(slam_pose *pose) {
+    Eigen::Map<Eigen::Vector3f> tran(pose->tran);
+    Eigen::Map<Eigen::Quaternionf> rot(pose->rot);
+    // Eigen::Vector3d tran(pose->tran);
+    // Eigen::Quaternionf rot(pose->rot);
+    Eigen::Vector3d dtran = tran.cast<double>();
+    Eigen::Quaterniond drot = rot.cast<double>();
+    if (pose->type == ACCURATE)
+        updatePoseForDrawing(dtran, drot);
+}
+
 void AlgorithmInterface::start() {
 //    start_stdcout_logger();
 #ifdef GLOG_TO_FILE
@@ -106,6 +122,8 @@ void AlgorithmInterface::start() {
 
 
     create_slam(&slam_, nullptr, config.c_str());
+    slam_register_image_process_callback(slam_, previewCallback);
+    slam_register_pose_callback(slam_, poseCallback);
     start_slam(slam_);
 
     algorithm_on_ = true;

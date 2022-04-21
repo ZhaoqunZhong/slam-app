@@ -62,7 +62,7 @@ std::vector<std::array<float,3>> mono_map_points;
 std::vector<std::array<float,3>> traj_to_draw, traj_gt;
 std::vector<Eigen::Matrix4d> key_frames;
 PerfMonitor pose_fps;
-void updatePoseForDrawing (Eigen::Matrix4d &pose) {
+void updatePose4x4ForDrawing (Eigen::Matrix4d &pose) {
     pthread_mutex_lock(&pose_mtx);
     pose_to_draw = pose.cast<float>();
     std::array<float,3> tp{pose_to_draw.block<3,1>(0,3).coeff(0), pose_to_draw.block<3,1>(0,3).coeff(1),

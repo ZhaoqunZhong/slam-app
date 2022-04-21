@@ -14,7 +14,6 @@ PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu, perf_pose;
 AlgorithmInterface algo_inter;
 
 void rgbCallback(rgb_msg &msg) {
-    updatePreviewMat(msg.yMat, true);
     algo_inter.rgbCallback(msg);
     perf_cam.update();
 }

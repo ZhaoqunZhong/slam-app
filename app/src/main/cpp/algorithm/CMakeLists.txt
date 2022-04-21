@@ -4,13 +4,16 @@ cmake_minimum_required(VERSION 3.10.2)
 project("slam_algorithm")
 
 add_library(${PROJECT_NAME} SHARED
-        algorithm_interface.cpp)
+        algorithm_interface.cpp
+        ${CMAKE_SOURCE_DIR}/platform/native_debug.cpp
+        )
 
 add_subdirectory(modify-vins-mono)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PUBLIC
 #        ${jniLibs_DIR}/libopencv_java4.so
-#        ${jniLibs_DIR}/libglog.so
+        log
+        ${jniLibs_DIR}/libglog.so
 #        ${jniLibs_DIR}/libceres.so
         ${jniLibs_DIR}/librosbag.so
         vins_mono

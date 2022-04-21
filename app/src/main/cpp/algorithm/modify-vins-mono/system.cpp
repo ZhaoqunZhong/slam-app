@@ -1,4 +1,6 @@
 #include "system.h"
+//debug
+// #include "native_debug.h"
 
 using namespace std;
 using namespace cv;
@@ -97,6 +99,41 @@ void System::subImageData(double dStampSec, Mat &img) {
         }
         updatePreviewMat(show_img, true);
     }*/
+/*    cv::Mat show_img;
+    cv::cvtColor(img, show_img, COLOR_GRAY2RGB);
+    if (imageProcessCallback_) {
+        for (unsigned int j = 0; j < trackerData[0].cur_pts.size(); j++) {
+            double len = min(1.0, 1.0 * trackerData[0].track_cnt[j] / vins_estimator::WINDOW_SIZE);
+            cv::circle(show_img, trackerData[0].cur_pts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+        }
+        slam_processed_image image;
+        image.ts = dStampSec * 1e9;
+        image.image_data = show_img.data;
+        image.image_width = show_img.cols;
+        image.image_height = show_img.rows;
+        image.processing_time = 0;
+        imageProcessCallback_(&image);
+    }*/
+    auto f = [](uint64_t ts, cv::Mat mat, System *sys) {
+        cv::Mat show_img;
+        cv::cvtColor(mat, show_img, COLOR_GRAY2RGB);
+        for (unsigned int j = 0; j < sys->trackerData[0].cur_pts.size(); j++) {
+            double len = min(1.0, 1.0 * sys->trackerData[0].track_cnt[j] / vins_estimator::WINDOW_SIZE);
+            cv::circle(show_img, sys->trackerData[0].cur_pts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+        }
+        slam_processed_image image;
+        image.ts = ts;
+        image.image_data = show_img.data;
+        image.image_width = show_img.cols;
+        image.image_height = show_img.rows;
+        image.processing_time = 0;
+        pthread_mutex_lock(&sys->img_pro_ckb_mtx_);
+        sys->imageProcessCallback_(&image);
+        pthread_mutex_unlock(&sys->img_pro_ckb_mtx_);
+    };
+    uint64_t image_ts = dStampSec * 1e9;
+    std::thread t (f, std::ref(image_ts), img.clone(), this);
+    t.detach();
 }
 
 vector<pair<vector<ImuConstPtr>, ImgConstPtr>> System::getMeasurements() {

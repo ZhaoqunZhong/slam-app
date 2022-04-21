@@ -136,7 +136,7 @@ void Estimator::setParameter() {
     ProjectionTdFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
     td = TD;
     /// load td and biases from saved file
-    load_td_bias_extrinsic();
+    // load_td_bias_extrinsic();
 }
 
 void Estimator::clearState() {
