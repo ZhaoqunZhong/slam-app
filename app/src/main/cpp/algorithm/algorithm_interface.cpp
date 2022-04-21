@@ -83,6 +83,7 @@ void previewCallback(slam_processed_image *image) {
     updatePreviewMat(preview.clone(), true);
 }
 
+PerfMonitor AlgorithmInterface::perf_pose_;
 void poseCallback(slam_pose *pose) {
     Eigen::Map<Eigen::Vector3f> tran(pose->tran);
     Eigen::Map<Eigen::Quaternionf> rot(pose->rot);
@@ -90,8 +91,15 @@ void poseCallback(slam_pose *pose) {
     // Eigen::Quaternionf rot(pose->rot);
     Eigen::Vector3d dtran = tran.cast<double>();
     Eigen::Quaterniond drot = rot.cast<double>();
-    if (pose->type == ACCURATE)
+    if (pose->type == ACCURATE) {
         updatePoseForDrawing(dtran, drot);
+        AlgorithmInterface::perf_pose_.update();
+    }
+
+}
+
+int AlgorithmInterface::getPoseFps() {
+    return perf_pose_.getFPS();
 }
 
 void AlgorithmInterface::start() {

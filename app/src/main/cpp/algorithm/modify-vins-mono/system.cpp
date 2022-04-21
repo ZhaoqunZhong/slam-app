@@ -26,7 +26,7 @@ System::~System() {
     m_estimator.unlock();
 }
 
-void System::subImageData(double dStampSec, Mat &img) {
+void System::subImageData(double dStampSec, Mat img) {
     if (first_image_flag) {
         LOG(INFO) << "subImageData first_image_flag" << endl;
         first_image_flag = false;
@@ -564,12 +564,14 @@ void System::motionOnlyProcess() {
         T.block<3,3>(0,0) = q_lastest.toRotationMatrix().cast<float>();
         T.block<3,1>(0,3) = p_latest.cast<float>();
         pose_out.type = ACCURATE;
-        // thread function version of saving image file
-        auto f = [](slam_pose pose, System *sys) {
+        // blocking version
+        poseCallback_(&pose_out);
+        // non-blocking version
+/*        auto f = [](slam_pose pose, System *sys) {
             sys->poseCallback_(&pose);
         };
         std::thread t(f, std::ref(pose_out), this);
-        t.detach();
+        t.detach();*/
     }
 
     mo_estimate_exited = true;

@@ -36,6 +36,8 @@ public:
     int run_offline_;
     std::string bag_name_;
 
+    static PerfMonitor perf_pose_;
+    int getPoseFps();
 };
 
 #endif //VID_ALGO_ENTRY_H

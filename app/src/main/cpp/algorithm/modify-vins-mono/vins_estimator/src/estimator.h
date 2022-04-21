@@ -21,6 +21,7 @@
 
 #include "motion_only_estimator.h"
 #include "../../slam_api/obslam_api.h"
+#include "utility/perf_monitor.h"
 
 using namespace vins_estimator;
 
@@ -66,7 +67,7 @@ class Estimator
 
     SolverFlag solver_flag;
     MarginalizationFlag  marginalization_flag;
-    // TimeLagMeasurer keyframe_timer_;
+    TimeLagMeasurer keyframe_timer_;
     Vector3d g;
     MatrixXd Ap[2], backup_A;
     VectorXd bp[2], backup_b;

@@ -87,7 +87,7 @@ void FeatureTracker::addPoints()
     }
 }
 
-void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
+void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
 {
     cv::Mat img;
     // TicToc t_r;
@@ -157,6 +157,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
             if (mask.size() != forw_img.size())
                 LOG(WARNING) << "wrong size " << endl;
             cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
+            LOG(INFO) << "Need to detect new features: " << n_max_cnt;
         }
         else
             n_pts.clear();

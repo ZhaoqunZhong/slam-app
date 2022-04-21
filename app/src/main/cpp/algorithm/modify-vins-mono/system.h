@@ -44,7 +44,7 @@ public:
 
     ~System();
 
-    void subImageData(double dStampSec, cv::Mat &img);
+    void subImageData(double dStampSec, cv::Mat img);
 
     void subImuData(double dStampSec, const Eigen::Vector3d &vGyr,
                     const Eigen::Vector3d &vAcc);

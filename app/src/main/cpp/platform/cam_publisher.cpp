@@ -268,8 +268,8 @@ void rgbImgReaderCbk(void *context, AImageReader *reader) {
     cv::Mat y_image(CamPublisher::rgb_height_, CamPublisher::rgb_width_, CV_8UC1, y_data);
 
     // TimeLagMeasurer timer;
-    // rgbMsg.yMat = y_image;
-    rgbMsg.yMat = y_image.clone();
+    rgbMsg.yMat = y_image;
+    // rgbMsg.yMat = y_image.clone();
     // LOG(INFO) << "Cam publisher image clone costs " << timer.lagFromStartSecond()*1e3 << " ms";
 #ifdef USE_UV_CH
     uint8_t *uv_data;

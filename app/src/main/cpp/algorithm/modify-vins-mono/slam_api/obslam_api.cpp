@@ -50,7 +50,7 @@ int32_t slam_add_image(SLAM_HANDLE slam_handle, uint64_t timestamp,
 {
     double imgTimeStamp = timestamp/1e9;
     cv::Mat img(height, width, CV_8UC1, data);
-    ((System*)slam_handle)->subImageData(imgTimeStamp, img);
+    ((System*)slam_handle)->subImageData(imgTimeStamp, img.clone());
     return 1;
 }
 

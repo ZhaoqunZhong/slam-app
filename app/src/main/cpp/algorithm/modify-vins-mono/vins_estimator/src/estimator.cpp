@@ -1,7 +1,7 @@
 #include "estimator.h"
 #include "glog/logging.h"
 #include <memory>
-#include "utility/perf_monitor.h"
+
 
 Estimator::Estimator() : f_manager{pre_integrations} {
     // LOG(INFO) << "init begins ";
@@ -239,14 +239,14 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 
     if (f_manager.addFeatureCheckParallax(frame_count, image, td)) {
         marginalization_flag = MARGIN_OLD;
-        // keyframe_timer_.restart();
+        keyframe_timer_.restart();
     } else {
         marginalization_flag = MARGIN_SECOND_NEW;
     }
-/*    if (keyframe_timer_.lagFromStartSecond() > 1) {
+    if (keyframe_timer_.lagFromStartSecond() > 1) {
         marginalization_flag = MARGIN_OLD;
         keyframe_timer_.restart();
-    }*/
+    }
     // LOG(INFO) << "marginalization_flag " << marginalization_flag << " ";
     // LOG(INFO) << "Add feature costs " << timer.lagFromStartSecond()*1e3 << " ms";
     // marginalization_flag = MARGIN_OLD; /// try always marginalize old

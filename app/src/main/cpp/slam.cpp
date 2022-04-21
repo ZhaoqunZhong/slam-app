@@ -10,7 +10,7 @@
 #include "nlohmann/json.hpp"
 #include "algorithm/algorithm_interface.h"
 
-PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu, perf_pose;
+PerfMonitor perf_cam, /*perf_acc, perf_gyr,*/ perf_imu, perf_pose;
 AlgorithmInterface algo_inter;
 
 void rgbCallback(rgb_msg &msg) {
@@ -25,12 +25,12 @@ void imuCallback(imu_msg &msg) {
 
 void accCallback(acc_msg &msg) {
 
-    perf_acc.update();
+    // perf_acc.update();
 }
 
 void gyrCallback(gyr_msg &msg) {
 
-    perf_gyr.update();
+    // perf_gyr.update();
 }
 
 CamPublisher camPublisher(rgbCallback, nullptr);
@@ -155,5 +155,5 @@ Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_getImuFps(JNIEnv *env, jobject t
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_getPoseFps(JNIEnv *env, jobject thiz) {
-    return perf_pose.getFPS();
+    return algo_inter.getPoseFps();
 }
