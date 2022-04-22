@@ -150,12 +150,15 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
         int n_max_cnt = MAX_CNT - static_cast<int>(forw_pts.size());
         if (n_max_cnt > 0)
         {
-            if(mask.empty())
+            if (mask.empty())
                 LOG(WARNING) << "mask is empty " << endl;
             if (mask.type() != CV_8UC1)
                 LOG(WARNING) << "mask type wrong " << endl;
-            if (mask.size() != forw_img.size())
+            if (mask.size() != forw_img.size()) {
                 LOG(WARNING) << "wrong size " << endl;
+                LOG(WARNING) << "mask size " << mask.size;
+                LOG(WARNING) << "forw_img size " << forw_img.size;
+            }
             cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
             LOG(INFO) << "Need to detect new features: " << n_max_cnt;
         }

@@ -88,7 +88,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Slam bootup costs: "
+        android:text="bootup time: "
         app:layout_constraintStart_toStartOf="@+id/textView3"
         app:layout_constraintTop_toBottomOf="@+id/start_slam" />
 
@@ -97,7 +97,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Initialization costs: "
+        android:text="Initial time: "
         app:layout_constraintStart_toStartOf="@+id/start_time"
         app:layout_constraintTop_toBottomOf="@+id/start_time" />
 
@@ -161,5 +161,23 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/pose_fps_label"
         app:layout_constraintTop_toTopOf="@+id/pose_fps_label" />
+
+    <TextView
+        android:id="@+id/bootup_time_display"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/start_time"
+        app:layout_constraintStart_toEndOf="@+id/start_time"
+        app:layout_constraintTop_toTopOf="@+id/start_time" />
+
+    <TextView
+        android:id="@+id/initial_time_display"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/initial_time"
+        app:layout_constraintStart_toEndOf="@+id/initial_time"
+        app:layout_constraintTop_toTopOf="@+id/initial_time" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -11,6 +11,8 @@ class SlamViewModel : ViewModel() {
     val _cam_stream_freq = MutableLiveData<String>()
     val _imu_stream_freq = MutableLiveData<String>()
     val _pose_freq = MutableLiveData<String>()
+    val _slam_boot_time = MutableLiveData<String>()
+    val _slam_init_time = MutableLiveData<String>()
 }
 
 @Serializable

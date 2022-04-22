@@ -98,11 +98,32 @@ void poseCallback(slam_pose *pose) {
 
 }
 
+double create_time, bootup_time, init_time;
+TimeLagMeasurer slam_timer;
+void statusCallback(slam_status *status) {
+    if (*status == INITIALIZING) {
+        bootup_time = slam_timer.getCurrentTimeSecond();
+        LOG(INFO) << "slam bootup costs " << bootup_time - create_time;
+    }
+    if (*status == TRACKING) {
+        init_time = slam_timer.getCurrentTimeSecond();
+        LOG(INFO) << "slam initialization costs " << init_time - create_time;
+    }
+}
+float AlgorithmInterface::getSlamBootTime() {
+    return std::max(bootup_time - create_time, 0.0);
+}
+float AlgorithmInterface::getInitializationTime() {
+    return std::max(init_time - create_time, 0.0);
+}
+
 int AlgorithmInterface::getPoseFps() {
     return perf_pose_.getFPS();
 }
 
 void AlgorithmInterface::start() {
+    clearVisualizationBuffers();
+
 //    start_stdcout_logger();
 #ifdef GLOG_TO_FILE
     std::string log_file = "/sdcard/orbbec-vio-data/log/log";
@@ -128,17 +149,24 @@ void AlgorithmInterface::start() {
     bag_name_ = static_cast<std::string>(fs["rosbag_path"]);
     fs.release();
 
-
+    create_time = slam_timer.getCurrentTimeSecond();
     create_slam(&slam_, nullptr, config.c_str());
     slam_register_image_process_callback(slam_, previewCallback);
     slam_register_pose_callback(slam_, poseCallback);
+    slam_register_status_callback(slam_, statusCallback);
     start_slam(slam_);
+    bootup_time = slam_timer.getCurrentTimeSecond();
+    LOG(INFO) << "slam bootup costs " << bootup_time - create_time;
 
     algorithm_on_ = true;
     pthread_create(&algo_t_, nullptr, threadRunner, this);
 }
 
 void AlgorithmInterface::stop() {
+    if (!algorithm_on_) {
+        LOG(WARNING) << "AlgorithmInterface hasn't started yet, can't call stop().";
+        return;
+    }
     algorithm_on_ = false;
     pthread_join(algo_t_, nullptr);
 
@@ -150,7 +178,6 @@ void AlgorithmInterface::stop() {
     google::ShutdownGoogleLogging();
 #endif
 
-    // clearVisualizationBuffers();
 }
 
 

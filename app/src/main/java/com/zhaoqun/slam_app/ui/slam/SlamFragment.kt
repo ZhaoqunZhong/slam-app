@@ -104,6 +104,8 @@ class SlamFragment : Fragment() {
         slamViewModel._cam_stream_freq.observe(viewLifecycleOwner, {binding.camStreamFps.text = it})
         slamViewModel._imu_stream_freq.observe(viewLifecycleOwner, {binding.imuStreamFps.text = it})
         slamViewModel._pose_freq.observe(viewLifecycleOwner, {binding.poseFps.text = it})
+        slamViewModel._slam_boot_time.observe(viewLifecycleOwner, {binding.bootupTimeDisplay.text = it})
+        slamViewModel._slam_init_time.observe(viewLifecycleOwner, {binding.initialTimeDisplay.text = it})
 
         var cam_ids = arrayListOf<String>("-1")
         var imu_freqs = arrayListOf<String>("0")
@@ -157,6 +159,8 @@ class SlamFragment : Fragment() {
                 slamViewModel._cam_stream_freq.postValue(getCamFps().toString() + "hz")
                 slamViewModel._imu_stream_freq.postValue(getImuFps().toString() + "hz")
                 slamViewModel._pose_freq.postValue(getPoseFps().toString() + "hz")
+                slamViewModel._slam_boot_time.postValue(getBootTime().toString() + "s")
+                slamViewModel._slam_init_time.postValue(getInitialTime().toString() + "s")
             }
         }
     }
@@ -169,6 +173,8 @@ class SlamFragment : Fragment() {
     external fun getCamFps() : Int
     external fun getImuFps() : Int
     external fun getPoseFps() : Int
+    external fun getBootTime() : Float
+    external fun getInitialTime() : Float
 
     companion object {
         // Used to load the 'native-lib' library on application startup.

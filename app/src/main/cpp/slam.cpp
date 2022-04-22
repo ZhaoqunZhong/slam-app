@@ -119,6 +119,7 @@ Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_startSlamJNI(JNIEnv *env, jobjec
     }
     int run_offline = static_cast<int>(fs["run_offline"]);
     if (run_offline) {
+        previewer.start(480, 640, preview_native_window);
     } else {
         std::map<int, std::pair<int, int>> cam_res {
                 {0, std::make_pair(640, 480)},
@@ -156,4 +157,14 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_getPoseFps(JNIEnv *env, jobject thiz) {
     return algo_inter.getPoseFps();
+}
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_getBootTime(JNIEnv *env, jobject thiz) {
+    return algo_inter.getSlamBootTime();
+}
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_zhaoqun_slam_1app_ui_slam_SlamFragment_getInitialTime(JNIEnv *env, jobject thiz) {
+    return algo_inter.getInitializationTime();
 }

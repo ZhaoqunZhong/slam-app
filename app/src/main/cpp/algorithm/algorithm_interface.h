@@ -38,6 +38,9 @@ public:
 
     static PerfMonitor perf_pose_;
     int getPoseFps();
+
+    float getSlamBootTime();
+    float getInitializationTime();
 };
 
 #endif //VID_ALGO_ENTRY_H

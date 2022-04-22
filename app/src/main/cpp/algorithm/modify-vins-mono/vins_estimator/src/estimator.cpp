@@ -296,6 +296,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
                 initial_timestamp = header;
             }
             if (result) {
+                slam_status status = TRACKING;
+                statusCallback_(&status);
                 LOG(WARNING) << "--- Initialization costs " << timer.lagFromStartSecond()*1e3 << " ms ---";
                 solver_flag = NON_LINEAR;
                 solveOdometry();
