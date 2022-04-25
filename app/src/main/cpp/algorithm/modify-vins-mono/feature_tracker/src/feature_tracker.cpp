@@ -160,7 +160,7 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
                 LOG(WARNING) << "forw_img size " << forw_img.size;
             }
             cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
-            LOG(INFO) << "Need to detect new features: " << n_max_cnt;
+            // LOG(INFO) << "Need to detect new features: " << n_max_cnt;
         }
         else
             n_pts.clear();

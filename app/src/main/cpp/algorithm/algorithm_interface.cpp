@@ -4,6 +4,7 @@
 #include <chrono>
 #include "glog/logging.h"
 #include <dirent.h>
+#include <RosbagPacker.h>
 #include "MessageType/sensor_msgs/Image.h"
 #include "MessageType/sensor_msgs/CompressedImage.h"
 #include "MessageType/sensor_msgs/Imu.h"
@@ -12,7 +13,7 @@
 #include "algorithm_interface.h"
 #include "modify-vins-mono/slam_api/obslam_api.h"
 
-// #define IS_SEPARATE_IMU
+#define IS_SEPARATE_IMU
 // #define GLOG_TO_FILE
 
 SLAM_HANDLE slam_;
@@ -24,6 +25,154 @@ ob_slam::rosbag::Bag play_bag;
 #define DEFAULT_TOPIC_GYRO  "/gyr0"
 std::vector <std::string> ros_topics{DEFAULT_TOPIC_IMU, DEFAULT_TOPIC_IMAGE, DEFAULT_TOPIC_ACCEL, DEFAULT_TOPIC_GYRO};
 
+/// Assemble imu finite automata
+enum Input {acc,gyr} cur_input;
+enum State {WAIT_FOR_MSG, ACC, ACC_GYR, ACC_GYR_ACC, ACC_GYRs, ACC_GYR_ACCs} cur_state;
+std::vector<gyr_msg> gyro_cache_;
+std::vector<acc_msg> acc_cache_;
+void constructImuInterpolateAcc() {
+    switch (cur_state) {
+        case WAIT_FOR_MSG:
+            if (cur_input == acc) {
+                cur_state = ACC;
+            } else {
+                gyro_cache_.clear();
+            }
+            break;
+        case ACC:
+            if (cur_input == acc) {
+                acc_cache_.erase(acc_cache_.begin());
+            } else {
+                if (gyro_cache_.front().ts <= acc_cache_.front().ts) {
+                    gyro_cache_.clear();
+                } else {
+                    cur_state = ACC_GYR;
+                }
+            }
+            break;
+        case ACC_GYR:
+            if (cur_input == acc) {
+                if (acc_cache_.back().ts <= gyro_cache_.front().ts) {
+                    acc_cache_.erase(acc_cache_.begin());
+                } else {
+                    imu_msg imu;
+                    imu.ts = gyro_cache_.front().ts;
+                    imu.gyro_part = gyro_cache_.front();
+                    double factor = (imu.ts - acc_cache_.front().ts)/(acc_cache_.back().ts - acc_cache_.front().ts);
+                    imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
+                                    acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
+                                    acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
+                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    cur_state = ACC_GYR_ACC;
+                }
+            } else {
+                cur_state = ACC_GYRs;
+            }
+            break;
+        case ACC_GYRs:
+            if (cur_input == acc) {
+                if (acc_cache_.back().ts <= gyro_cache_.front().ts) {
+                    acc_cache_.erase(acc_cache_.begin());
+                } else if (acc_cache_.back().ts > gyro_cache_.front().ts && acc_cache_.back().ts < gyro_cache_.back().ts) {
+                    int i;
+                    for (i = 0; i < gyro_cache_.size(); i++) {
+                        if (gyro_cache_[i].ts < acc_cache_.back().ts) {
+                            imu_msg imu;
+                            imu.ts = gyro_cache_[i].ts;
+                            imu.gyro_part = gyro_cache_[i];
+                            double factor = (imu.ts - acc_cache_.front().ts)/(acc_cache_.back().ts - acc_cache_.front().ts);
+                            imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
+                                            acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
+                                            acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
+                            slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                        } else {
+                            break;
+                        }
+                    }
+                    acc_cache_.erase(acc_cache_.begin());
+                    gyro_cache_.erase(gyro_cache_.begin(), gyro_cache_.begin() + i);
+                } else {
+                    for (gyr_msg & gyro : gyro_cache_) {
+                        imu_msg imu;
+                        imu.ts = gyro.ts;
+                        imu.gyro_part = gyro;
+                        double factor = (imu.ts - acc_cache_.front().ts)/(acc_cache_.back().ts - acc_cache_.front().ts);
+                        imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
+                                        acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
+                                        acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
+                        slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    }
+                    gyro_cache_.erase(gyro_cache_.begin(), gyro_cache_.begin() + gyro_cache_.size() - 1);
+                    cur_state = ACC_GYR_ACC;
+                }
+            } else {}
+            break;
+        case ACC_GYR_ACC:
+            if (cur_input == acc) {
+                cur_state = ACC_GYR_ACCs;
+            } else {
+                if (gyro_cache_.back().ts > acc_cache_.back().ts) {
+                    acc_cache_.erase(acc_cache_.begin());
+                    gyro_cache_.erase(gyro_cache_.begin());
+                    cur_state = ACC_GYR;
+                } else {
+                    imu_msg imu;
+                    imu.ts = gyro_cache_.back().ts;
+                    imu.gyro_part = gyro_cache_.back();
+                    double factor = (imu.ts - acc_cache_.front().ts)/(acc_cache_.back().ts - acc_cache_.front().ts);
+                    imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
+                                    acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
+                                    acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
+                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    gyro_cache_.erase(gyro_cache_.begin());
+                }
+            }
+            break;
+        case ACC_GYR_ACCs:
+            if (cur_input == acc) {
+
+            } else {
+                if (gyro_cache_.back().ts <= acc_cache_[1].ts) {
+                    imu_msg imu;
+                    imu.ts = gyro_cache_.back().ts;
+                    imu.gyro_part = gyro_cache_.back();
+                    double factor = (imu.ts - acc_cache_.front().ts)/(acc_cache_.back().ts - acc_cache_.front().ts);
+                    imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
+                                    acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
+                                    acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
+                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    gyro_cache_.erase(gyro_cache_.begin());
+                } else if (gyro_cache_.back().ts >= acc_cache_.back().ts) {
+                    gyro_cache_.erase(gyro_cache_.begin());
+                    acc_cache_.erase(acc_cache_.begin(), acc_cache_.begin() + acc_cache_.size() - 1);
+                    cur_state = ACC_GYR;
+                } else {
+                    int i;
+                    for (i = 0; i < acc_cache_.size(); i++) {
+                        if (acc_cache_[i].ts >= gyro_cache_.back().ts)
+                            break;
+                    }
+                    imu_msg imu;
+                    imu.ts = gyro_cache_.back().ts;
+                    imu.gyro_part = gyro_cache_.back();
+                    double factor = (imu.ts - acc_cache_[i-1].ts)/(acc_cache_[i].ts - acc_cache_[i-1].ts);
+                    imu.acc_part = {imu.ts, acc_cache_[i-1].ax * (1-factor) + acc_cache_[i].ax *factor,
+                                    acc_cache_[i-1].ay * (1-factor) + acc_cache_[i].ay *factor,
+                                    acc_cache_[i-1].az * (1-factor) + acc_cache_[i].az *factor};
+                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
+                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    gyro_cache_.erase(gyro_cache_.begin());
+                    acc_cache_.erase(acc_cache_.begin(), acc_cache_.begin() + i-1);
+                }
+            }
+            break;
+    }
+}
 
 void AlgorithmInterface::rgbCallback(rgb_msg &msg) {
     if (!algorithm_on_)
@@ -58,7 +207,9 @@ void AlgorithmInterface::accCallback(acc_msg &msg) {
     if (slam_ == nullptr)
         return;
 #ifdef IS_SEPARATE_IMU
-    slam_->accCallback(msg.ts/1e9, msg.ax, msg.ay, msg.az);
+    acc_cache_.push_back(msg);
+    cur_input = acc;
+    constructImuInterpolateAcc();
 #endif
 }
 
@@ -68,7 +219,9 @@ void AlgorithmInterface::gyrCallback(gyr_msg &msg) {
     if (slam_ == nullptr)
         return;
 #ifdef IS_SEPARATE_IMU
-    slam_->gyrCallback(msg.ts/1e9, msg.rx, msg.ry, msg.rz);
+    gyro_cache_.push_back(msg);
+    cur_input = gyr;
+    constructImuInterpolateAcc();
 #endif
 }
 
@@ -123,6 +276,7 @@ int AlgorithmInterface::getPoseFps() {
 
 void AlgorithmInterface::start() {
     clearVisualizationBuffers();
+    cur_state = WAIT_FOR_MSG;
 
 //    start_stdcout_logger();
 #ifdef GLOG_TO_FILE
@@ -224,18 +378,26 @@ void AlgorithmInterface::runAlgorithm() {
             }
 #else
             if (DEFAULT_TOPIC_ACCEL == iter->getTopic()) {
+                LOG_FIRST_N(WARNING, 1) << "sensor_msgs::Acc detected";
                 ob_slam::geometry_msgs::Vector3Stamped::ConstPtr
                         acc_ptr = iter->instantiate<ob_slam::geometry_msgs::Vector3Stamped>();
                 if (slam_ == nullptr)
                     return;
-                slam_->accCallback(acc_ptr->header.stamp.toSec(), acc_ptr->vector.x, acc_ptr->vector.y, acc_ptr->vector.z);
+                acc_msg accMsg{acc_ptr->header.stamp.toNSec(), acc_ptr->vector.x, acc_ptr->vector.y, acc_ptr->vector.z};
+                acc_cache_.push_back(accMsg);
+                cur_input = acc;
+                constructImuInterpolateAcc();
             }
             if (DEFAULT_TOPIC_GYRO == iter->getTopic()) {
+                LOG_FIRST_N(WARNING, 1) << "sensor_msgs::Gyr detected";
                 ob_slam::geometry_msgs::Vector3Stamped::ConstPtr
                         gyr_ptr = iter->instantiate<ob_slam::geometry_msgs::Vector3Stamped>();
                 if (slam_ == nullptr)
                         return;
-                slam_->gyrCallback(gyr_ptr->header.stamp.toSec(), gyr_ptr->vector.x, gyr_ptr->vector.y, gyr_ptr->vector.z);
+                gyr_msg gyrMsg{gyr_ptr->header.stamp.toNSec(), gyr_ptr->vector.x, gyr_ptr->vector.y, gyr_ptr->vector.z};
+                gyro_cache_.push_back(gyrMsg);
+                cur_input = gyr;
+                constructImuInterpolateAcc();
             }
 #endif
             /// sleep between messages
