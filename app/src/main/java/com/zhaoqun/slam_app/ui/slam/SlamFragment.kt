@@ -83,8 +83,9 @@ class SlamFragment : Fragment() {
             if (isChecked) {
                 val config_string = serializeSlamDataConfig()
                 startSlamJNI(config_string)
-            } else
+            } else {
                 stopSlamJNI()
+            }
         }
 
         return root

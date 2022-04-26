@@ -64,7 +64,7 @@ add_library(${PROJECT_NAME}
     src/gpl/EigenQuaternionParameterization.cc)
 
 #target_link_libraries(Calibration ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
         ${jniLibs_DIR}/libopencv_java4.so
         ${jniLibs_DIR}/libboost_filesystem-clang-mt-a64-1_74.a
         ${jniLibs_DIR}/libceres.so

@@ -34,7 +34,7 @@ add_library(feature_tracker
     src/feature_tracker.cpp
     )
 
-target_link_libraries(feature_tracker
+target_link_libraries(feature_tracker PUBLIC
     ${jniLibs_DIR}/libopencv_java4.so)
 
 target_include_directories(${PROJECT_NAME} PUBLIC

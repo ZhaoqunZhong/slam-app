@@ -53,7 +53,7 @@ add_library(${PROJECT_NAME}
     )
 
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
         ${jniLibs_DIR}/libopencv_java4.so
         ${jniLibs_DIR}/libceres.so)
 

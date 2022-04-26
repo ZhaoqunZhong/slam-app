@@ -11,12 +11,14 @@
 #include "RosbagStorage/rosbag/view.h"
 #include "cv_bridge_simple.h"
 #include "algorithm_interface.h"
-#include "modify-vins-mono/slam_api/obslam_api.h"
+#include "perf_monitor.h"
+// #include "modify-vins-mono/slam_api/obslam_api.h"
+#include <dlfcn.h>
 
 #define IS_SEPARATE_IMU
 #define GLOG_TO_FILE
 
-SLAM_HANDLE slam_;
+void* slam_;
 
 ob_slam::rosbag::Bag play_bag;
 #define DEFAULT_TOPIC_IMU   "/imu0"
@@ -25,6 +27,7 @@ ob_slam::rosbag::Bag play_bag;
 #define DEFAULT_TOPIC_GYRO  "/gyr0"
 std::vector <std::string> ros_topics{DEFAULT_TOPIC_IMU, DEFAULT_TOPIC_IMAGE, DEFAULT_TOPIC_ACCEL, DEFAULT_TOPIC_GYRO};
 
+typedef int32_t (*dl_add_imu)(void*, uint64_t, double, double, double, double, double, double);
 /// Assemble imu finite automata
 enum Input {acc,gyr} cur_input;
 enum State {WAIT_FOR_MSG, ACC, ACC_GYR, ACC_GYR_ACC, ACC_GYRs, ACC_GYR_ACCs} cur_state;
@@ -62,8 +65,9 @@ void constructImuInterpolateAcc() {
                     imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
                                     acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
                                     acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
-                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    // if (dl_add_imu)
+                    // dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                    //              imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                     cur_state = ACC_GYR_ACC;
                 }
             } else {
@@ -85,8 +89,9 @@ void constructImuInterpolateAcc() {
                             imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
                                             acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
                                             acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
-                            slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                            // if (dl_add_imu)
+                            //     dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                            //      imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                         } else {
                             break;
                         }
@@ -102,8 +107,9 @@ void constructImuInterpolateAcc() {
                         imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
                                         acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
                                         acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
-                        slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                        // if (dl_add_imu)
+                        //     dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                        //          imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                     }
                     gyro_cache_.erase(gyro_cache_.begin(), gyro_cache_.begin() + gyro_cache_.size() - 1);
                     cur_state = ACC_GYR_ACC;
@@ -126,8 +132,9 @@ void constructImuInterpolateAcc() {
                     imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
                                     acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
                                     acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
-                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    // if (dl_add_imu)
+                    //     dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                    //              imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                     gyro_cache_.erase(gyro_cache_.begin());
                 }
             }
@@ -144,8 +151,9 @@ void constructImuInterpolateAcc() {
                     imu.acc_part = {imu.ts, acc_cache_.front().ax * (1-factor) + acc_cache_.back().ax *factor,
                                     acc_cache_.front().ay * (1-factor) + acc_cache_.back().ay *factor,
                                     acc_cache_.front().az * (1-factor) + acc_cache_.back().az *factor};
-                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    // if (dl_add_imu)
+                    //     dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                    //              imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                     gyro_cache_.erase(gyro_cache_.begin());
                 } else if (gyro_cache_.back().ts >= acc_cache_.back().ts) {
                     gyro_cache_.erase(gyro_cache_.begin());
@@ -164,8 +172,9 @@ void constructImuInterpolateAcc() {
                     imu.acc_part = {imu.ts, acc_cache_[i-1].ax * (1-factor) + acc_cache_[i].ax *factor,
                                     acc_cache_[i-1].ay * (1-factor) + acc_cache_[i].ay *factor,
                                     acc_cache_[i-1].az * (1-factor) + acc_cache_[i].az *factor};
-                    slam_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az, 
-                                 imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
+                    // if (dl_add_imu)
+                    //     dl_add_imu(slam_, imu.ts, imu.acc_part.ax, imu.acc_part.ay, imu.acc_part.az,
+                    //              imu.gyro_part.rx, imu.gyro_part.ry, imu.gyro_part.rz);
                     gyro_cache_.erase(gyro_cache_.begin());
                     acc_cache_.erase(acc_cache_.begin(), acc_cache_.begin() + i-1);
                 }
@@ -174,13 +183,17 @@ void constructImuInterpolateAcc() {
     }
 }
 
+typedef int32_t (*dl_add_image)(void*, uint64_t, uint32_t, uint32_t, uint8_t*);
 void AlgorithmInterface::rgbCallback(rgb_msg &msg) {
     if (!algorithm_on_)
         return;
     if (slam_ == nullptr)
         return;
     // updatePreviewMat(msg.yMat, true);
-    slam_add_image(slam_, msg.ts, msg.yMat.cols, msg.yMat.rows, msg.yMat.data);
+    // slam_add_image(slam_, msg.ts, msg.yMat.cols, msg.yMat.rows, msg.yMat.data);
+    // if (dl_add_image) {
+    //     dl_add_image (slam_, msg.ts, msg.yMat.cols, msg.yMat.rows, msg.yMat.data);
+    // }
 }
 
 void AlgorithmInterface::featureCallback(double ts, std::vector <std::pair<size_t, Eigen::VectorXf>> &feats) {
@@ -196,7 +209,8 @@ void AlgorithmInterface::imuCallback(imu_msg &msg) {
     if (slam_ == nullptr)
         return;
 #ifndef IS_SEPARATE_IMU
-    slam_add_imu(slam_, msg.ts, msg.acc_part.ax, msg.acc_part.ay, msg.acc_part.az,
+    if (dl_add_imu)
+        *dl_add_imu(slam_, msg.ts, msg.acc_part.ax, msg.acc_part.ay, msg.acc_part.az,
                  msg.gyro_part.rx, msg.gyro_part.ry, msg.gyro_part.rz);
 #endif
 }
@@ -231,12 +245,37 @@ void *threadRunner(void *ptr) {
     return nullptr;
 }
 
+
+struct slam_processed_image {
+    uint64_t ts;
+    uint32_t image_width;
+    uint32_t image_height;
+    uint8_t *image_data;
+    float processing_time;
+};
+typedef void (*image_process_callback)(slam_processed_image *image);
 void previewCallback(slam_processed_image *image) {
     cv::Mat preview(image->image_height, image->image_width, CV_8UC3, image->image_data);
     updatePreviewMat(preview.clone(), true);
 }
 
+
 PerfMonitor AlgorithmInterface::perf_pose_;
+typedef enum {
+    PRE_ACCURATE = 0,
+    ACCURATE
+} slam_pose_type;
+/*
+ * Pose is T_world_to_imu
+ */
+struct slam_pose {
+    uint64_t ts;
+    float tran[3];
+    float rot[4]; //xyzw as in Eigen quaternion storage
+    float T[16]; //column major
+    slam_pose_type type;
+};
+typedef void (*slam_pose_callback)(slam_pose* pose);
 void poseCallback(slam_pose *pose) {
     Eigen::Map<Eigen::Vector3f> tran(pose->tran);
     Eigen::Map<Eigen::Quaternionf> rot(pose->rot);
@@ -254,6 +293,11 @@ void poseCallback(slam_pose *pose) {
 double create_time, bootup_time, init_time;
 bool init_time_lock = false; //Only keep the first time, not the later re-initializations.
 TimeLagMeasurer slam_timer;
+typedef enum {
+    INITIALIZING = 0,
+    TRACKING,
+} slam_status;
+typedef void (*slam_status_callback) (slam_status *status);
 void statusCallback(slam_status *status) {
     if (*status == INITIALIZING) {
         bootup_time = slam_timer.getCurrentTimeSecond();
@@ -276,6 +320,13 @@ int AlgorithmInterface::getPoseFps() {
     return perf_pose_.getFPS();
 }
 
+typedef int32_t (*dl_start_slam)(void*);
+typedef int32_t (*dl_stop_slam)(void*);
+typedef void (*dl_create_slam)(void*, const char *, const char *);
+typedef void (*dl_release_slam)(void*);
+typedef void (*dl_register_status_callback)(void*, slam_status_callback);
+typedef void (*dl_register_pose_callback)(void*, slam_pose_callback);
+typedef void (*dl_register_image_process_callback)(void*, image_process_callback);
 void AlgorithmInterface::start() {
     clearVisualizationBuffers();
     cur_state = WAIT_FOR_MSG;
@@ -306,14 +357,26 @@ void AlgorithmInterface::start() {
     bag_name_ = static_cast<std::string>(fs["rosbag_path"]);
     fs.release();
 
+
     create_time = slam_timer.getCurrentTimeSecond();
+    // create_slam(&slam_, nullptr, config.c_str());
+    // slam_register_image_process_callback(slam_, previewCallback);
+    // slam_register_pose_callback(slam_, poseCallback);
+    // slam_register_status_callback(slam_, statusCallback);
+    // start_slam(slam_);
+    void* dl_handle = dlopen("/sdcard/slam_app/SlamRun/libvins_mono.so", RTLD_LAZY);
+    if (!dl_handle) {
+        LOG(ERROR) << "Cannot load library: " << dlerror();
+    }
+    // reset errors
+    dlerror();
+    // load the symbols
+    dl_create_slam create_slam = (dl_create_slam) dlsym(dl_handle, "create_slam");
+    const char* dlsym_error = dlerror();
+    if (dlsym_error) {
+        LOG(ERROR) << "Cannot load function create_slam: " << dlsym_error;
+    }
     create_slam(&slam_, nullptr, config.c_str());
-    slam_register_image_process_callback(slam_, previewCallback);
-    slam_register_pose_callback(slam_, poseCallback);
-    slam_register_status_callback(slam_, statusCallback);
-    start_slam(slam_);
-    bootup_time = slam_timer.getCurrentTimeSecond();
-    LOG(INFO) << "slam bootup costs " << bootup_time - create_time;
 
     algorithm_on_ = true;
     pthread_create(&algo_t_, nullptr, threadRunner, this);
@@ -327,8 +390,8 @@ void AlgorithmInterface::stop() {
     algorithm_on_ = false;
     pthread_join(algo_t_, nullptr);
 
-    stop_slam(slam_);
-    release_slam(slam_);
+    // stop_slam(slam_);
+    // release_slam(slam_);
 
 #ifdef GLOG_TO_FILE
     google::FlushLogFiles(google::GLOG_WARNING);
@@ -355,14 +418,16 @@ void AlgorithmInterface::runAlgorithm() {
                     cv::Mat mat = cvb.ConvertToCvMat(image_ptr);
                     if (slam_ == nullptr)
                         return;
-                    slam_add_image(slam_, image_ptr->header.stamp.toNSec(), mat.cols, mat.rows, mat.data);
+                    // if (dl_add_image)
+                    //     dl_add_image (slam_, image_ptr->header.stamp.toNSec(), mat.cols, mat.rows, mat.data);
                 } else if (iter->isType<ob_slam::sensor_msgs::CompressedImage>()) { ///compressed image
                     LOG_FIRST_N(WARNING, 1) << "sensor_msgs::CompressedImage detected";
                     ob_slam::sensor_msgs::CompressedImage::ConstPtr image_ptr = iter->instantiate<ob_slam::sensor_msgs::CompressedImage>();
                     cv::Mat mat = cv::imdecode(image_ptr->data, cv::IMREAD_GRAYSCALE);
                     if (slam_ == nullptr)
                         return;
-                    slam_add_image(slam_, image_ptr->header.stamp.toNSec(), mat.cols, mat.rows, mat.data);
+                    // if (dl_add_image)
+                    //     dl_add_image (slam_, image_ptr->header.stamp.toNSec(), mat.cols, mat.rows, mat.data);
                 } else {
                     LOG(ERROR) << "Unknow image type in ros bag!";
                     return;
@@ -374,7 +439,8 @@ void AlgorithmInterface::runAlgorithm() {
                 ob_slam::sensor_msgs::Imu::ConstPtr imu_ptr = iter->instantiate<ob_slam::sensor_msgs::Imu>();
                 if (slam_ == nullptr)
                     return;
-                slam_add_imu(slam_, imu_ptr->header.stamp.toNSec(), imu_ptr->linear_acceleration.x,
+                if (dl_add_imu)
+                    *dl_add_imu(slam_, imu_ptr->header.stamp.toNSec(), imu_ptr->linear_acceleration.x,
                              imu_ptr->linear_acceleration.y,
                              imu_ptr->linear_acceleration.z, imu_ptr->angular_velocity.x,
                              imu_ptr->angular_velocity.y, imu_ptr->angular_velocity.z);
