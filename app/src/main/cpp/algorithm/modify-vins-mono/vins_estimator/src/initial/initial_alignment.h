@@ -27,3 +27,4 @@ class ImageFrame
 };
 
 bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs, Vector3d &g, VectorXd &x);
+void RefineGravityAndBias(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vector3d &ba, Vector3d &bg);

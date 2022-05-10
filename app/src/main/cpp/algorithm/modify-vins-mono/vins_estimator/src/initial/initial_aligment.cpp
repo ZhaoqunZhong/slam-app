@@ -1,4 +1,5 @@
 #include "initial_alignment.h"
+#include "initial_sfm.h"
 
 void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs)
 {
@@ -119,6 +120,101 @@ void RefineGravity(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vector
             g0 = (g0 + lxly * dg).normalized() * G.norm();
             //double s = x(n_state - 1);
     }   
+    g = g0;
+}
+
+
+void RefineGravityAndBias(map<double, ImageFrame> &all_image_frame, Vector3d &g, Vector3d &ba, Vector3d &bg)
+{
+    Vector3d g0 = g.normalized() * G.norm();
+    // Vector3d lx, ly;
+    //VectorXd x;
+    int all_frame_count = all_image_frame.size();
+    int n_state = all_frame_count * 3 + 2 + 1 + 6;
+    int m = (all_frame_count - 1) * 3 * 3;
+
+    MatrixXd A{m, n_state};
+    A.setZero();
+    VectorXd b{m};
+    b.setZero();
+
+    map<double, ImageFrame>::iterator frame_i;
+    map<double, ImageFrame>::iterator frame_j;
+    for(int k = 0; k < 20; k++)
+    {
+        MatrixXd lxly(3, 2);
+        lxly = TangentBasis(g0);
+        int i = 0;
+        for (frame_i = all_image_frame.begin(); next(frame_i) != all_image_frame.end(); frame_i++, i++)
+        {
+            frame_j = next(frame_i);
+            TicToc tt;
+            frame_j->second.pre_integration->repropagate(ba, bg); // repropagate imu pre-integration with new biases
+            // LOG(WARNING) << "DEBUG imu re propagate time: " << tt.toc();
+
+            // x = [dg v0...vk s dba dbg]
+            MatrixXd tmp_A(9, 15);
+            tmp_A.setZero();
+            VectorXd tmp_b(9);
+            tmp_b.setZero();
+
+            Eigen::Matrix3d dp_dba = frame_j->second.pre_integration->jacobian.block<3, 3>(O_P, O_BA);
+            Eigen::Matrix3d dp_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_P, O_BG);
+            Eigen::Matrix3d dq_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_R, O_BG);
+            Eigen::Matrix3d dv_dba = frame_j->second.pre_integration->jacobian.block<3, 3>(O_V, O_BA);
+            Eigen::Matrix3d dv_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_V, O_BG);
+
+            double dt = frame_j->second.pre_integration->sum_dt;
+            tmp_A.block<3, 3>(0, 0) = frame_i->second.R.transpose() * dt * dt / 2 * lxly;
+            tmp_A.block<3, 3>(0, 2) = -dt * Matrix3d::Identity();
+            tmp_A.block<3, 3>(0, 5) = Eigen::Matrix3d::Zero();
+            tmp_A.block<3, 1>(0, 8) = frame_i->second.R.transpose() * (frame_j->second.T - frame_i->second.T);
+            tmp_A.block<3, 3>(0, 9) = -dp_dba;
+            tmp_A.block<3, 3>(0, 12) = -dp_dbg;
+            tmp_b.block<3, 1>(0, 0) = frame_j->second.pre_integration->delta_p + frame_i->second.R.transpose() * frame_j->second.R * TIC[0] - TIC[0]
+                                      - 0.5 * frame_i->second.R.transpose() * dt * dt * g0;
+
+            tmp_A.block<3, 3>(3, 0) = frame_i->second.R.transpose() * dt * lxly;
+            tmp_A.block<3, 3>(3, 2) = -Matrix3d::Identity();
+            tmp_A.block<3, 3>(3, 5) = frame_i->second.R.transpose() * frame_j->second.R;
+            tmp_A.block<3, 1>(3, 8) = Eigen::Vector3d::Zero();
+            tmp_A.block<3, 3>(3, 9) = -dv_dba;
+            tmp_A.block<3, 3>(3, 12) = -dv_dbg;
+            tmp_b.block<3, 1>(3, 0) = frame_j->second.pre_integration->delta_v - frame_i->second.R.transpose() * dt * g0;
+
+            tmp_A.block<3, 3>(6, 12) = dq_dbg / 2;
+            tmp_b.block<3, 1>(6, 0) = (frame_j->second.pre_integration->delta_q.inverse() *
+                                           Eigen::Quaterniond(frame_i->second.R.transpose() * frame_j->second.R)).vec();
+
+/*            /// weighted with imu pre-integration covariance
+            Matrix<double, 9, 9> cov = frame_j->second.pre_integration->covariance.block<9, 9>(0, 0);
+            Matrix<double, 9, 9> cov_inv = cov.inverse();
+            Matrix<double, 9, 9> sqrt_info = Eigen::LLT<Eigen::Matrix<double, 9, 9>>(cov_inv).matrixL().transpose();
+            tmp_A = sqrt_info * tmp_A * 1e-5;
+            tmp_b = sqrt_info * tmp_b * 1e-5;*/
+
+            A.block<9, 2>(i * 9, 0) += tmp_A.block<9,2>(0, 0); // dg part
+            A.block<9, 3>(i * 9, 2 + 3 * i) += tmp_A.block<9,3>(0, 2); // vb_k part
+            A.block<9, 3>(i * 9, 5 + 3 * i) += tmp_A.block<9,3>(0, 5); // vb_k+1 part
+            A.block<9, 1>(i * 9, n_state - 7) += tmp_A.block<9,1>(0, 8); // s part
+            A.block<9, 3>(i * 9, n_state - 6) += tmp_A.block<9,3>(0, 9); // ba part
+            A.block<9, 3>(i * 9, n_state - 3) += tmp_A.block<9,3>(0, 12); // bg part
+            b.segment<9>(i * 9) += tmp_b;
+        }
+        JacobiSVD<MatrixXd> svd(A, ComputeFullU | ComputeFullV);
+        VectorXd x = svd.solve(b);
+        VectorXd dg = x.segment<2>(0);
+        g0 = (g0 + lxly * dg).normalized() * G.norm();
+        //double s = x(n_state - 1);
+        Eigen::Vector3d dba = x.segment<3>(n_state -6);
+        Eigen::Vector3d dbg = x.segment<3>(n_state -3);
+        ba = ba + dba;
+        bg = bg + dbg;
+        LOG(WARNING) << "Refined ba " << ba.transpose() << " with norm: " << ba.norm();
+        LOG(WARNING )<< "Refined bg " << bg.transpose() << " with norm: " << bg.norm();
+        LOG(WARNING) << "Refined g " << g0.transpose();
+        LOG(WARNING) << "Ax - b norm: " << (A*x - b).norm();
+    }
     g = g0;
 }
 

@@ -13,7 +13,7 @@
 #include "algorithm_interface.h"
 #include "modify-vins-mono/slam_api/obslam_api.h"
 
-#define IS_SEPARATE_IMU
+// #define IS_SEPARATE_IMU
 #define GLOG_TO_FILE
 
 SLAM_HANDLE slam_;

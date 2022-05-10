@@ -890,7 +890,7 @@ bool Estimator::myInitialStructure() {
     } // second.R is now R_c0_bi, second.T is now T_c0_ci
 
     /// Visual inertial alignment
-    VectorXd x;
+    /*VectorXd x;
     int all_frame_count = visual_frames.size();
     LOG(INFO) << "visual_frames size " << all_frame_count;
     int n_state = all_frame_count * 3 + 3 + 1;
@@ -945,7 +945,7 @@ bool Estimator::myInitialStructure() {
         b.segment<6>(i * 6) += tmp_b;
     }
     JacobiSVD<MatrixXd> svd(A, ComputeFullU | ComputeFullV);
-    x = svd.solve(b);
+    x = svd.solve(b); // x = [g v0...vk s]
     g = x.segment<3>(0);
     LOG(WARNING) << "g norm: " << g.norm() << " value: " << g.transpose();
     // Direct scale g norm for now.
@@ -955,7 +955,126 @@ bool Estimator::myInitialStructure() {
     if (s < 0) {
         LOG(ERROR) << "Scale has minus sign, initialization failed.";
         return false;
+    }*/
+    /// Visual inertial alignment with imu biases
+    VectorXd x;
+    int all_frame_count = visual_frames.size();
+    LOG(INFO) << "visual_frames size " << all_frame_count;
+    // int n_state = all_frame_count * 3 + 3 + 1 + 6; //43
+    int n_state = all_frame_count * 3 + 3 + 1 + 3; //without acc bias
+    int m = (all_frame_count - 1) * 3 * 3; //90
+    if ( m < n_state) {
+        LOG(ERROR) << "Linear alignment matrix has less rows than columns.";
+        return false;
     }
+    MatrixXd A{m, n_state};
+    A.setZero();
+    VectorXd b{m};
+    b.setZero();
+    map<double, ImageFrame>::iterator frame_i;
+    map<double, ImageFrame>::iterator frame_j;
+    int i = 0;
+    for (frame_i = visual_frames.begin(); next(frame_i) != visual_frames.end(); frame_i++, i++)
+    {
+        frame_j = next(frame_i);
+
+        // MatrixXd tmp_A(9, 16);
+        MatrixXd tmp_A(9, 13);//without acc bias
+        tmp_A.setZero();
+        VectorXd tmp_b(9);
+        tmp_b.setZero();
+
+        Eigen::Matrix3d dp_dba = frame_j->second.pre_integration->jacobian.block<3, 3>(O_P, O_BA);
+        Eigen::Matrix3d dp_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_P, O_BG);
+        Eigen::Matrix3d dq_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_R, O_BG);
+        Eigen::Matrix3d dv_dba = frame_j->second.pre_integration->jacobian.block<3, 3>(O_V, O_BA);
+        Eigen::Matrix3d dv_dbg = frame_j->second.pre_integration->jacobian.block<3, 3>(O_V, O_BG);
+
+        double dt = frame_j->second.pre_integration->sum_dt;
+        tmp_A.block<3, 3>(0, 0) = frame_i->second.R.transpose() * dt * dt / 2;
+        tmp_A.block<3, 3>(0, 3) = -dt * Matrix3d::Identity();
+        tmp_A.block<3, 3>(0, 6) = Eigen::Matrix3d::Zero();
+        tmp_A.block<3, 1>(0, 9) = frame_i->second.R.transpose() * (frame_j->second.T - frame_i->second.T);
+        // tmp_A.block<3, 3>(0, 10) = -dp_dba;
+        // tmp_A.block<3, 3>(0, 13) = -dp_dbg;
+        tmp_A.block<3, 3>(0, 10) = -dp_dbg;//without acc bias
+        tmp_b.block<3, 1>(0, 0) = frame_j->second.pre_integration->delta_p + frame_i->second.R.transpose() * frame_j->second.R * TIC[0] - TIC[0];
+
+        tmp_A.block<3, 3>(3, 0) = frame_i->second.R.transpose() * dt;
+        tmp_A.block<3, 3>(3, 3) = -Matrix3d::Identity();
+        tmp_A.block<3, 3>(3, 6) = frame_i->second.R.transpose() * frame_j->second.R;
+        tmp_A.block<3, 1>(3, 9) = Eigen::Vector3d::Zero();
+        // tmp_A.block<3, 3>(3, 10) = -dv_dba;
+        // tmp_A.block<3, 3>(3, 13) = -dv_dbg;
+        tmp_A.block<3, 3>(3, 10) = -dv_dbg;//without acc bias
+        tmp_b.block<3, 1>(3, 0) = frame_j->second.pre_integration->delta_v;
+
+        // tmp_A.block<3, 3>(6, 13) = dq_dbg / 2;
+        tmp_A.block<3, 3>(6, 10) = dq_dbg / 2; //without acc bias
+        tmp_b.block<3, 1>(6, 0) = (frame_j->second.pre_integration->delta_q.inverse() *
+                Eigen::Quaterniond(frame_i->second.R.transpose() * frame_j->second.R)).vec();
+
+/*        /// weighted with imu pre-integration covariance
+        Matrix<double, 9, 9> cov = frame_j->second.pre_integration->covariance.block<9, 9>(0, 0);
+        Matrix<double, 9, 9> cov_inv = cov.inverse();
+        Matrix<double, 9, 9> sqrt_info = Eigen::LLT<Eigen::Matrix<double, 9, 9>>(cov_inv).matrixL().transpose();
+        LOG_FIRST_N(INFO, 1) << "sqrt_info \n" << sqrt_info;
+        tmp_A = sqrt_info * tmp_A * 1e-5;
+        tmp_b = sqrt_info * tmp_b * 1e-5;*/
+
+        A.block<9, 3>(i * 9, 0) += tmp_A.block<9,3>(0, 0); // g part
+        A.block<9, 3>(i * 9, 3 + 3 * i) += tmp_A.block<9,3>(0, 3); // vb_k part
+        A.block<9, 3>(i * 9, 6 + 3 * i) += tmp_A.block<9,3>(0, 6); // vb_k+1 part
+        A.block<9, 1>(i * 9, n_state - 7) += tmp_A.block<9,1>(0, 9); // s part
+        // A.block<9, 3>(i * 9, n_state - 6) += tmp_A.block<9,3>(0, 10); // ba part
+        // A.block<9, 3>(i * 9, n_state - 3) += tmp_A.block<9,3>(0, 13); // bg part
+        A.block<9, 3>(i * 9, n_state - 3) += tmp_A.block<9,3>(0, 10); // bg part, without acc bias
+        b.segment<9>(i * 9) += tmp_b;
+    }
+    JacobiSVD<MatrixXd> svd(A, ComputeFullU | ComputeFullV);
+    x = svd.solve(b); // x = [g v0...vk s ba bg]
+    LOG(WARNING) << "Ax - b norm: " << (A*x - b).norm();
+    g = x.segment<3>(0);
+    LOG(WARNING) << "g norm: " << g.norm() << " value: " << g.transpose();
+    // Direct scale g norm for now.
+    g = g * G.norm() / g.norm();
+    double s = (x.segment<1>(n_state -7))(0);
+    LOG(WARNING) << "s " << s;
+    if (s < 0) {
+        LOG(ERROR) << "Scale has minus sign, initialization failed.";
+        return false;
+    }
+/*    Eigen::Vector3d ba = x.segment<3>(n_state -6);
+    Eigen::Vector3d bg = x.segment<3>(n_state -3);
+    if (ba.norm() > 1 || bg.norm() > 1) {
+        LOG(ERROR) << "Imu biases result too large, initialization failed.";
+        LOG(ERROR) << "ba " << ba.transpose() << " bg " << bg.transpose();
+        LOG(ERROR) << "g + ba in body_k: " << (g + ba).transpose() << " with norm: " << (g + ba).norm();
+        // return false;
+    }
+    LOG(WARNING) << "ba " << ba.transpose() << " bg " << bg.transpose();*/
+    Eigen::Vector3d ba = Eigen::Vector3d::Zero();
+    Eigen::Vector3d bg = x.segment<3>(n_state -3);
+    if (bg.norm() > 1) {
+        LOG(ERROR) << "Imu biases result too large, initialization failed.";
+        LOG(ERROR) << " bg " << bg.transpose();
+        // return false;
+    }
+    LOG(WARNING) << " bg " << bg.transpose();
+
+    /// Refine g and biases
+    // RefineGravityAndBias(visual_frames, g, ba, bg);
+
+    for (int i = 0; i <= WINDOW_SIZE; i++) {
+        Bas[i] = ba;
+        Bgs[i] = bg;
+    }
+    for (frame_i = visual_frames.begin(); next(frame_i) != visual_frames.end( ); frame_i++)
+    {
+        frame_j = next(frame_i);
+        frame_j->second.pre_integration->repropagate(Bas[0], Bgs[0]);
+    }
+
     // change state
     for (int i = 0; i <= frame_count; i++)
     {
@@ -979,7 +1098,7 @@ bool Estimator::myInitialStructure() {
         //           << " depth " << it_per_id.estimated_depth;
     }
 
-    //triangulat on cam pose , no tic
+    //triangulate on cam pose , no tic
     Vector3d TIC_TMP[NUM_OF_CAM];
     for (int i = 0; i < NUM_OF_CAM; i++)
         TIC_TMP[i].setZero();

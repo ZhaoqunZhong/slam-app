@@ -227,7 +227,7 @@ void DataDumper::DumpThreadFunction() {
             fs << msg.ts << std::endl;
             fs.close();
 
-            if (save_images_) {
+/*            if (save_images_) {
                 std::string folder = dump_path_ + "rgb_images/";
                 std::string filename = folder + std::to_string(msg.ts) + ".png";
 
@@ -247,7 +247,7 @@ void DataDumper::DumpThreadFunction() {
                 // pthread_t t;
                 // pthread_create(&t, nullptr, threadImgSave, (void*)&paras);
                 // pthread_detach(t);
-            }
+            }*/
 
             /// rosbag
             if (record_rosbag_)

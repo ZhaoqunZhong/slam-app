@@ -117,13 +117,28 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
     if (cur_pts.size() > 0)
     {
         TicToc t_o;
-        vector<uchar> status;
+        vector<uchar> status, backflow_status;
         vector<float> err;
+        vector<cv::Point2f> backflow_pts;
         cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3);
-
-        for (int i = 0; i < int(forw_pts.size()); i++)
+        cv::calcOpticalFlowPyrLK(forw_img, cur_img, forw_pts, backflow_pts, backflow_status, err, cv::Size(21, 21), 3);
+        int forw_cnt=0, back_cnt=0;
+        for (int i = 0; i < int(forw_pts.size()); i++) {
             if (status[i] && !inBorder(forw_pts[i]))
                 status[i] = 0;
+            if (status[i])
+                forw_cnt++;
+            if (status[i] && backflow_status[i]) {
+                if ( (backflow_pts[i].x - cur_pts[i].x)*(backflow_pts[i].x - cur_pts[i].x)
+                    +(backflow_pts[i].y - cur_pts[i].y)*(backflow_pts[i].y - cur_pts[i].y)
+                    > 1) // pixel error
+                    status[i] = 0;
+                else
+                    back_cnt++;
+            }
+        }
+        // LOG(WARNING) << "DEBUG forw_cnt " << forw_cnt << " back_cnt " << back_cnt;
+        // LOG(WARNING) << "DEBUG backward optical flow reject " << 100.0*(forw_cnt - back_cnt) / forw_cnt << "%";
         // reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
         reduceVector(forw_pts, status);
@@ -131,14 +146,21 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
         // reduceVector(cur_un_pts, status);
         reduceVector(track_cnt, status);
         //LOG(INFO) << "temporal optical flow costs: " << t_o.toc() << " ms";
+
     }
+    // LOG(WARNING) << "DEBUG forw_pts size " << forw_pts.size();
+    // LOG(WARNING) << "DEBUG cur_pts size " << cur_pts.size();
+    // LOG(WARNING) << "DEBUG ids size " << ids.size();
+    // LOG(WARNING) << "DEBUG track_cnt size " << track_cnt.size();
 
     for (auto &n : track_cnt)
         n++;
 
-    if (PUB_THIS_FRAME)
+    int feature_drop = MAX_CNT - static_cast<int>(forw_pts.size());
+    // if (PUB_THIS_FRAME)
+    if (feature_drop > 0.25 * MAX_CNT)
     {
-        rejectWithF();
+        // rejectWithF();
         //LOG(INFO) << "set mask begins";
         // TicToc t_m;
         // setMask();
@@ -147,8 +169,8 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
 
         //LOG(INFO) << "detect feature begins ";
         // TicToc t_t;
-        int n_max_cnt = MAX_CNT - static_cast<int>(forw_pts.size());
-        if (n_max_cnt > 0)
+
+        if (feature_drop > 0)
         {
             if (mask.empty())
                 LOG(WARNING) << "mask is empty " << endl;
@@ -159,8 +181,8 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
                 LOG(WARNING) << "mask size " << mask.size;
                 LOG(WARNING) << "forw_img size " << forw_img.size;
             }
-            cv::goodFeaturesToTrack(forw_img, n_pts, MAX_CNT - forw_pts.size(), 0.01, MIN_DIST, mask);
-            // LOG(INFO) << "Need to detect new features: " << n_max_cnt;
+            cv::goodFeaturesToTrack(forw_img, n_pts, feature_drop, 0.01, MIN_DIST, mask);
+            LOG(INFO) << "Need to detect new features: " << feature_drop;
         }
         else
             n_pts.clear();
@@ -177,6 +199,10 @@ void FeatureTracker::readImage(const cv::Mat _img, double _cur_time)
     cur_img = forw_img;
     cur_pts = forw_pts;
     undistortedPoints();
+    // LOG(WARNING) << "DEBUG ids outside size " << ids.size();
+    TicToc tt;
+    rollingShutter_F_reject();
+    // LOG(WARNING) << "DEBUG rollingShutter_F_reject cost " << tt.toc() << "ms";
 
 /*    for (unsigned int i = 0;; i++)
     {
@@ -281,6 +307,7 @@ void FeatureTracker::undistortedPoints()
 {
     cur_un_pts.clear();
     cur_un_pts_map.clear();
+    cur_rs_un_pts_map.clear();
     //cv::undistortPoints(cur_pts, un_pts, K, cv::Mat());
     for (unsigned int i = 0; i < cur_pts.size(); i++)
     {
@@ -322,6 +349,17 @@ void FeatureTracker::undistortedPoints()
                 double v_x = (cur_un_pts[i].x - it->second.x) / dt;
                 double v_y = (cur_un_pts[i].y - it->second.y) / dt;
                 pts_velocity.push_back(cv::Point2f(v_x, v_y));
+
+                double feature_dt = (cur_pts[i].y / ROW) * image_readout_ns * 1e-9;
+                double rs_x = cur_un_pts[i].x - v_x * feature_dt;
+                double rs_y = cur_un_pts[i].y - v_y * feature_dt;
+                cur_rs_un_pts_map.insert(make_pair(ids[i], cv::Point2f(rs_x, rs_y)));
+                // LOG(INFO) << "feature dt " << feature_dt;
+                // LOG(INFO) << "cur_un_pts[i].x " << cur_un_pts[i].x << " v_x * feature_dt " << v_x * feature_dt;
+                // LOG(INFO) << "cur_un_pts[i].y " << cur_un_pts[i].y << " v_y * feature_dt " << v_y * feature_dt;
+                /// consider rolling shutter from here
+                cur_un_pts[i].x = rs_x;
+                cur_un_pts[i].y = rs_y;
             }
             else
                 pts_velocity.push_back(cv::Point2f(0, 0));
@@ -336,4 +374,79 @@ void FeatureTracker::undistortedPoints()
     }
     prev_un_pts_map = cur_un_pts_map;
     prev_time = cur_time;
+}
+
+void FeatureTracker::rollingShutter_F_reject() {
+    if (PUB_THIS_FRAME) {
+    //     LOG(WARNING) << "DEBUG ids inside size " << ids.size();
+        if (!prev_rs_un_pts_map.empty()) {
+            if (cur_rs_un_pts_map.size() >= 8)
+            {
+                vector<cv::Point2f> un_rs_cur_pts, un_rs_forw_pts;
+                vector<int> rs_pts_ids;
+                for (auto & p : cur_rs_un_pts_map)
+                {
+                    std::map<int, cv::Point2f>::iterator it;
+                    it = prev_rs_un_pts_map.find(p.first);
+                    if (it != prev_rs_un_pts_map.end()) {
+ /*                       cv::Point2f un_rs_cur_pt_backproject, un_rs_forw_pt_backproject;
+                        un_rs_cur_pt_backproject.x = FOCAL_LENGTH * p.second.x + COL / 2.0;
+                        un_rs_cur_pt_backproject.y = FOCAL_LENGTH * p.second.y + ROW / 2.0;
+                        un_rs_cur_pts.push_back(un_rs_cur_pt_backproject);
+                        un_rs_forw_pt_backproject.x = FOCAL_LENGTH * it->second.x + COL / 2.0;
+                        un_rs_forw_pt_backproject.y = FOCAL_LENGTH * it->second.y + ROW / 2.0;
+                        un_rs_forw_pts.push_back(un_rs_forw_pt_backproject);*/
+                        un_rs_cur_pts.push_back(p.second);
+                        un_rs_forw_pts.push_back(it->second);
+                        rs_pts_ids.push_back(p.first);
+                    }
+                }
+                // LOG(WARNING) << "DEBUG rs pts size " << rs_pts_ids.size();
+                if (rs_pts_ids.size() >= 8) {
+                    vector<uchar> rs_status;
+                    queue<int> invalid_ids;
+                    // LOG(WARNING) << "DEBUG POINT!";
+                    cv::findFundamentalMat(un_rs_cur_pts, un_rs_forw_pts, cv::FM_RANSAC,
+                                           F_THRESHOLD / FOCAL_LENGTH, 0.99, rs_status);
+                    for (int i = 0; i < rs_status.size(); i++) {
+                        if (!rs_status[i]) {
+                            invalid_ids.push(rs_pts_ids[i]);
+                            cur_rs_un_pts_map.erase(rs_pts_ids[i]);
+                            // LOG(WARNING) << "DEBUG invalid id " << rs_pts_ids[i];
+                        }
+                    }
+                    // LOG(WARNING) << "DEBUG  ----------------------" ;
+                    LOG(WARNING) << "DEBUG rolling shutter F reject " << 100.0 * invalid_ids.size() / rs_pts_ids.size() << "%";
+                    int j = 0;
+                    int smallest_id = -1;
+                    // LOG(WARNING) << "DEBUG ids size " << ids.size();
+                    for (int i = 0; i < ids.size(); i++) {
+                        if (!invalid_ids.empty())
+                            smallest_id = invalid_ids.front();
+                        // LOG(WARNING) << "DEBUG smallest_id " << smallest_id;
+                        if (ids[i] != smallest_id) {
+                            ids[j] = ids[i];
+                            cur_pts[j] = cur_pts[i];
+                            track_cnt[j] = track_cnt[i];
+                            cur_un_pts[j] = cur_un_pts[i];
+                            pts_velocity[j] = pts_velocity[i];
+                            j++;
+                        } else {
+                            if (!invalid_ids.empty())
+                                invalid_ids.pop();
+                        }
+
+                    }
+                    // LOG(WARNING) << "DEBUG j " << j;
+                    ids.resize(j);
+                    cur_pts.resize(j);
+                    track_cnt.resize(j);
+                    cur_un_pts.resize(j);
+                    pts_velocity.resize(j);
+                }
+            }
+        }
+
+        prev_rs_un_pts_map = cur_rs_un_pts_map;
+    }
 }

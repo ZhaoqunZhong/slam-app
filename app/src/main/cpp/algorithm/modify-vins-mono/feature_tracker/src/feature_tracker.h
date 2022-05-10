@@ -64,4 +64,8 @@ class FeatureTracker
     double prev_time;
 
     static int n_id;
+
+    uint64_t image_readout_ns = 19430000;
+    void rollingShutter_F_reject();
+    map<int, cv::Point2f> cur_rs_un_pts_map, prev_rs_un_pts_map;
 };

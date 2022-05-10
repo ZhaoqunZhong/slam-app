@@ -187,7 +187,7 @@ class DataRecordFragment : Fragment() {
             binding.imuFps.selectedItemPosition,
             binding.imuFile.selectedItem.toString(),
             binding.imuOrder.selectedItemPosition,
-            false //binding.packRosbag.isChecked
+            true //binding.packRosbag.isChecked
         )
         val record_config_string = json.encodeToString(record_config)
 //        Log.i(debug_tag, "record_config string $record_config_string")
