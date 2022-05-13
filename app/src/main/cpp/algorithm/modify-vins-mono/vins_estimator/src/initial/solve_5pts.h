@@ -33,8 +33,8 @@ public:
     ~RotationMatrixLocalParameterization() {}
 
     bool Plus(const double *x, const double *delta, double *x_plus_delta) const {
-        Eigen::Map<const Eigen::Matrix<double, 3, 3, RowMajor>> R(x);
-        Eigen::Map<Eigen::Matrix<double, 3, 3, RowMajor>> R_prime(x_plus_delta);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3>> R(x);
+        Eigen::Map<Eigen::Matrix<double, 3, 3>> R_prime(x_plus_delta);
         Eigen::Map<const Eigen::Vector3d> tmp(delta);
         Eigen::AngleAxisd d_theta(tmp.norm(), tmp.normalized());
         Eigen::Matrix3d d_R = d_theta.toRotationMatrix();
@@ -61,8 +61,8 @@ public:
                                    const Eigen::Vector3d t0) : p1_(p1), p2_(p2), t0_(t0) {}
 
     bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const {
-        Eigen::Map<const Eigen::Matrix<double, 3, 3, RowMajor>> R(parameters[0]);
-        Eigen::Map<const Eigen::Matrix<double, 3, 3, RowMajor>> Rt(parameters[1]);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3>> R(parameters[0]);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3>> Rt(parameters[1]);
         *residuals = p1_.transpose() * (Rt * t0_).cross(R * p2_);
 
         if (jacobians) {
@@ -97,8 +97,8 @@ public:
     BAsecondViewconstraint(const Eigen::Vector2d p2, const Eigen::Vector3d t0) : p2_(p2), t0_(t0) {}
 
     bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const {
-        Eigen::Map<const Eigen::Matrix<double, 3, 3, RowMajor>> R_transposed(parameters[0]);
-        Eigen::Map<const Eigen::Matrix<double, 3, 3, RowMajor>> Rt(parameters[1]);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3>> R_transposed(parameters[0]);
+        Eigen::Map<const Eigen::Matrix<double, 3, 3>> Rt(parameters[1]);
         Eigen::Map<const Eigen::Vector3d> P1(parameters[2]);
         Eigen::Map<Eigen::Vector2d> r(residuals);
         Eigen::Vector3d P2 = R_transposed * (P1 - Rt * t0_);
@@ -109,21 +109,21 @@ public:
         J_r_P2 << 1 / P2.z(), 0, -P2.x() / (P2.z() * P2.z()), 0, 1 / P2.z(), -P2.y() /
                                                                              (P2.z() * P2.z());
         if (jacobians) {
-            if (jacobians[0]) {
-                Eigen::Map<Eigen::Matrix<double, 2, 9>> J_r_Rtransposed(jacobians[0]);
+            if (jacobians[0]) {/// Should the jacobian be in row major form? -> Yes! Check ceres doc!
+                Eigen::Map<Eigen::Matrix<double, 2, 9, RowMajor>> J_r_Rtransposed(jacobians[0]);
                 Eigen::Matrix3d J_P2_Rtransposed =
                         -R_transposed * Utility::skewSymmetric(P1 - Rt * t0_);
                 J_r_Rtransposed.leftCols(3) = J_r_P2 * J_P2_Rtransposed;
                 J_r_Rtransposed.rightCols(6).setZero();
             }
             if (jacobians[1]) {
-                Eigen::Map<Eigen::Matrix<double, 2, 9>> J_r_Rt(jacobians[1]);
+                Eigen::Map<Eigen::Matrix<double, 2, 9, RowMajor>> J_r_Rt(jacobians[1]);
                 Eigen::Matrix3d J_P2_Rt = R_transposed * Rt * Utility::skewSymmetric(t0_);
                 J_r_Rt.leftCols(3) = J_r_P2 * J_P2_Rt;
                 J_r_Rt.rightCols(6).setZero();
             }
             if (jacobians[2]) {
-                Eigen::Map<Eigen::Matrix<double, 2, 3>> J_r_P1(jacobians[2]);
+                Eigen::Map<Eigen::Matrix<double, 2, 3, RowMajor>> J_r_P1(jacobians[2]);
                 Eigen::Matrix3d J_P2_P1 = R_transposed;
                 J_r_P1 = J_r_P2 * J_P2_P1;
             }
@@ -148,7 +148,7 @@ public:
 
         if (jacobians) {
             if (jacobians[0]) {
-                Eigen::Map<Eigen::Matrix<double, 2, 3>> J_P1(jacobians[0]);
+                Eigen::Map<Eigen::Matrix<double, 2, 3, RowMajor>> J_P1(jacobians[0]);
                 J_P1 << 1 / P1.z(), 0, -P1.x() / (P1.z() * P1.z()), 0, 1 / P1.z(), -P1.y() /
                                                                                    (P1.z() *
                                                                                     P1.z());

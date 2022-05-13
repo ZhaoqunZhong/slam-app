@@ -890,7 +890,8 @@ bool Estimator::myInitialStructure() {
     } // second.R is now R_c0_bi, second.T is now T_c0_ci
 
     /// Visual inertial alignment
-    /*VectorXd x;
+    /*
+    VectorXd x;
     int all_frame_count = visual_frames.size();
     LOG(INFO) << "visual_frames size " << all_frame_count;
     int n_state = all_frame_count * 3 + 3 + 1;
@@ -1014,8 +1015,8 @@ bool Estimator::myInitialStructure() {
         tmp_b.block<3, 1>(6, 0) = (frame_j->second.pre_integration->delta_q.inverse() *
                 Eigen::Quaterniond(frame_i->second.R.transpose() * frame_j->second.R)).vec();
 
-/*        /// weighted with imu pre-integration covariance
-        Matrix<double, 9, 9> cov = frame_j->second.pre_integration->covariance.block<9, 9>(0, 0);
+        /// weighted with imu pre-integration covariance
+/*        Matrix<double, 9, 9> cov = frame_j->second.pre_integration->covariance.block<9, 9>(0, 0);
         Matrix<double, 9, 9> cov_inv = cov.inverse();
         Matrix<double, 9, 9> sqrt_info = Eigen::LLT<Eigen::Matrix<double, 9, 9>>(cov_inv).matrixL().transpose();
         LOG_FIRST_N(INFO, 1) << "sqrt_info \n" << sqrt_info;
@@ -1061,29 +1062,71 @@ bool Estimator::myInitialStructure() {
         // return false;
     }
     LOG(WARNING) << " bg " << bg.transpose();
-
-    /// Refine g and biases
-    // RefineGravityAndBias(visual_frames, g, ba, bg);
-
-    for (int i = 0; i <= WINDOW_SIZE; i++) {
-        Bas[i] = ba;
-        Bgs[i] = bg;
-    }
     for (frame_i = visual_frames.begin(); next(frame_i) != visual_frames.end( ); frame_i++)
     {
         frame_j = next(frame_i);
-        frame_j->second.pre_integration->repropagate(Bas[0], Bgs[0]);
+        frame_j->second.pre_integration->repropagate(ba, bg);
     }
+
+
+    ///linear refine g and biases
+    // RefineGravityAndBias(visual_frames, g, ba, bg);
 
     // change state
     for (int i = 0; i <= frame_count; i++)
     {
-        Matrix3d Ri = visual_frames[Headers[i]].R;
-        Vector3d Pi = visual_frames[Headers[i]].T;
-        Ps[i] = Pi; // t_c0_ci
-        Rs[i] = Ri; // R_c0_bi
+        Matrix3d Ri = visual_frames[Headers[i]].R; // R_c0_bi
+        Vector3d Pi = visual_frames[Headers[i]].T; // t_c0_ci
+        Ps[i] = Pi;
+        Rs[i] = Ri;
         visual_frames[Headers[i]].is_key_frame = true;
     }
+    int j = -1;
+    for (frame_i = visual_frames.begin(); frame_i != visual_frames.end(); frame_i++)
+    {
+        j++;
+        Vs[j] = x.segment<3>((j + 1) * 3); //vb_i
+    }
+    /// Inertial only optimization
+#if 1
+    ceres::Problem Inertial_only_op;
+    ceres::LocalParameterization *R_local_parameterization = new RotationMatrixLocalParameterization();
+    Eigen::Matrix3d Rg = Eigen::Matrix3d::Identity();
+    Inertial_only_op.AddParameterBlock(Rg.data(), 9, R_local_parameterization);
+    i = 0;
+    for (frame_i = visual_frames.begin(); next(frame_i) != visual_frames.end(); frame_i++,i++) {
+        frame_j = next(frame_i);
+        InertialOnlyConstraint *f = new InertialOnlyConstraint(frame_j->second.pre_integration, Rs[i],
+                                                               Rs[i+1], Ps[i], Ps[i+1], g, TIC[0]);
+        Inertial_only_op.AddResidualBlock(f, nullptr, Rg.data(), Vs[i].data(), Vs[i+1].data(), &s, ba.data(), bg.data());
+    }
+    // fix ba to 0
+    // Inertial_only_op.SetParameterBlockConstant(ba.data());
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::SPARSE_SCHUR;
+    options.trust_region_strategy_type = ceres::DOGLEG;
+    options.max_num_iterations = 100;
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &Inertial_only_op, &summary);
+    LOG(WARNING) << "DEBUG Inertial only optimization result " << summary.FullReport();
+    // update gravity
+    g = Rg * g;
+    LOG(WARNING) << "DEBUG g " << g.transpose();
+    LOG(WARNING) << "DEBUG acc bias " << ba.transpose() << " norm: " << ba.norm();
+    LOG(WARNING) << "DEBUG gyr bias " << bg.transpose();
+    LOG(WARNING) << "DEBUG s " << s;
+
+    for (frame_i = visual_frames.begin(); next(frame_i) != visual_frames.end( ); frame_i++)
+    {
+        frame_j = next(frame_i);
+        frame_j->second.pre_integration->repropagate(ba, bg);
+    }
+#endif
+    for (int i = 0; i <= WINDOW_SIZE; i++) {
+        Bas[i] = ba;
+        Bgs[i] = bg;
+    }
+
 /*    VectorXd dep = f_manager.getDepthVector();
     for (int i = 0; i < dep.size(); i++)
         dep[i] = -1;
@@ -1122,9 +1165,9 @@ bool Estimator::myInitialStructure() {
     for (frame_i = visual_frames.begin(); frame_i != visual_frames.end(); frame_i++)
     {
         kv++;
-        Vs[kv] = frame_i->second.R * x.segment<3>((kv + 1) * 3); // Vs are relative to c0 now
+        // Vs[kv] = frame_i->second.R * x.segment<3>((kv + 1) * 3); // Vs are relative to c0 now
+        Vs[kv] = frame_i->second.R * Vs[kv];
     }
-
 
     Matrix3d R0 = Utility::g2R(g); //Rotation from world to c0
     double yaw = Utility::R2ypr(R0 * Rs[0]).x(); // yaw from world to b0
@@ -1386,15 +1429,15 @@ void Estimator::double2vector() {
 bool Estimator::failureDetection() {
     if (f_manager.last_track_num < 2) {
         LOG(ERROR) << "too few tracked features " << f_manager.last_track_num;
-        return true;
+        // return true;
     }
     if (Bas[WINDOW_SIZE].norm() > 1.0) {
         LOG(ERROR) << "big acc bias estimation " << Bas[WINDOW_SIZE].norm();
-        return true;
+        // return true;
     }
     if (Bgs[WINDOW_SIZE].norm() > 1.0) {
         LOG(ERROR) << "big gyr bias estimation " << Bgs[WINDOW_SIZE].norm();
-        return true;
+        // return true;
     }
     /*
     if (tic(0) > 1)

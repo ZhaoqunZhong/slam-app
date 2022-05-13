@@ -146,7 +146,7 @@ vector<pair<vector<ImuConstPtr>, ImgConstPtr>> System::getMeasurements() {
         }
 
         if (imu_buf.back()->header <= feature_buf.front()->header + estimator.td) {
-            LOG(WARNING) << "wait for imu, only should happen at the beginning, sum_of_wait: " << sum_of_wait << endl;
+            // LOG(WARNING) << "wait for imu, only should happen at the beginning, sum_of_wait: " << sum_of_wait << endl;
             sum_of_wait++;
             return measurements;
         }
@@ -306,8 +306,10 @@ void System::process() {
                 }
                 pthread_mutex_unlock(&pose_mtx);*/
                 /// save biases
-                LOG(INFO) << "current acc bias: " << estimator.Bas[vins_estimator::WINDOW_SIZE].transpose()
-                          << " gyr bias: " << estimator.Bgs[vins_estimator::WINDOW_SIZE].transpose();
+                LOG(INFO) << "current acc bias " << estimator.Bas[vins_estimator::WINDOW_SIZE].transpose()
+                    << " norm: " << estimator.Bas[vins_estimator::WINDOW_SIZE].norm();
+                LOG(INFO) << "current gyr bias " << estimator.Bgs[vins_estimator::WINDOW_SIZE].transpose()
+                        << " norm: " << estimator.Bgs[vins_estimator::WINDOW_SIZE].norm();
                 Eigen::VectorXd biases(6);
                 biases.topRows(3) = estimator.Bas[vins_estimator::WINDOW_SIZE];
                 biases.bottomRows(3) = estimator.Bgs[vins_estimator::WINDOW_SIZE];
@@ -384,7 +386,7 @@ std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> System::getMoMeasu
             return measurements;
         }
         if (imu_buf_copy.back()->header <= mo_img_buf_.front()->header + td) {
-            LOG(WARNING) << "getMoMeasurements() wait for imu.";
+            // LOG(WARNING) << "getMoMeasurements() wait for imu.";
             return measurements;
         }
         if (imu_buf_copy.front()->header >= mo_img_buf_.front()->header + td) {
@@ -547,7 +549,7 @@ void System::motionOnlyProcess() {
         options.trust_region_strategy_type = ceres::DOGLEG;
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-        LOG(INFO) << "Motion only ba result " << summary.BriefReport();
+        // LOG(INFO) << "Motion only ba result " << summary.BriefReport();
 
         array<double, 7> latest_pose = poses.back();
         Vector3d p_latest(latest_pose[0], latest_pose[1], latest_pose[2]);

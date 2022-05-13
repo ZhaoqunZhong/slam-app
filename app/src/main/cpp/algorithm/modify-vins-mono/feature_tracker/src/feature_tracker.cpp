@@ -416,7 +416,7 @@ void FeatureTracker::rollingShutter_F_reject() {
                         }
                     }
                     // LOG(WARNING) << "DEBUG  ----------------------" ;
-                    LOG(WARNING) << "DEBUG rolling shutter F reject " << 100.0 * invalid_ids.size() / rs_pts_ids.size() << "%";
+                    // LOG(WARNING) << "DEBUG rolling shutter F reject " << 100.0 * invalid_ids.size() / rs_pts_ids.size() << "%";
                     int j = 0;
                     int smallest_id = -1;
                     // LOG(WARNING) << "DEBUG ids size " << ids.size();
