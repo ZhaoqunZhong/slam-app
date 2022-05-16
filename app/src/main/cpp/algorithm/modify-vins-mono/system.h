@@ -121,8 +121,6 @@ public:
     slam_pose_callback poseCallback_;
     image_process_callback imageProcessCallback_;
     pthread_mutex_t img_pro_ckb_mtx_ = PTHREAD_MUTEX_INITIALIZER;
-
-
 };
 
 
