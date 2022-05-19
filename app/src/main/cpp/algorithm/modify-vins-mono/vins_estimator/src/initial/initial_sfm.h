@@ -8,7 +8,6 @@
 #include <map>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
-#include "../factor/projection_factor.h"
 #include "../parameters.h"
 
 using namespace Eigen;

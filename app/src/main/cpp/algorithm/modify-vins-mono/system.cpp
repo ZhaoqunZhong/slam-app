@@ -2,6 +2,7 @@
 //debug
 // #include "native_debug.h"
 
+using namespace Initializer;
 using namespace std;
 using namespace cv;
 
@@ -42,8 +43,8 @@ System::System(uint image_height, uint image_width, double fx, double fy, double
         estimator.ric[i] = RIC[i];
     }
     // f_manager.setRic(ric);
-    ProjectionFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
-    ProjectionTdFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    // ProjectionFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    // ProjectionTdFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
     estimator.td = vins_estimator::TD;
 
     feature_tracker::MAX_CNT = 150;
@@ -76,68 +77,6 @@ System::System(uint image_height, uint image_width, double fx, double fy, double
     vi_th_ = std::thread(&System::process, this);
     vi_th_.detach();
     thread_initialized_ = true;
-}
-
-void System::addCalibrationParas(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
-                         cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
-                         double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
-                         Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
-                         double gravity_norm) {
-
-    vins_estimator::SOLVER_TIME = 0.04;
-    vins_estimator::NUM_ITERATIONS = 8;
-    vins_estimator::MIN_PARALLAX = 10.0;
-    vins_estimator::MIN_PARALLAX = vins_estimator::MIN_PARALLAX / vins_estimator::FOCAL_LENGTH;
-    vins_estimator::ACC_N = acc_n;
-    vins_estimator::ACC_W = acc_w;
-    vins_estimator::GYR_N = gyr_n;
-    vins_estimator::GYR_W = gyr_w;
-    vins_estimator::G.z() = gravity_norm;
-    vins_estimator::ROW = image_height;
-    vins_estimator::COL = image_width;
-    vins_estimator::ESTIMATE_EXTRINSIC = 0;
-    vins_estimator::RIC.push_back(Ric);
-    vins_estimator::TIC.push_back(tic);
-    vins_estimator::INIT_DEPTH = 5.0;
-    vins_estimator::TD = timeshift;
-    vins_estimator::ESTIMATE_TD = 1;
-    vins_estimator::ROLLING_SHUTTER = 1;
-    vins_estimator::TR = readout;
-    for (int i = 0; i < vins_estimator::NUM_OF_CAM; i++) {
-        estimator.tic[i] = TIC[i];
-        estimator.ric[i] = RIC[i];
-    }
-    // f_manager.setRic(ric);
-    ProjectionFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
-    ProjectionTdFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
-    estimator.td = vins_estimator::TD;
-
-    feature_tracker::MAX_CNT = 150;
-    feature_tracker::MIN_DIST = 30;
-    feature_tracker::ROW = image_height;
-    feature_tracker::COL = image_width;
-    feature_tracker::FREQ = 10;
-    feature_tracker::F_THRESHOLD = 1.0;
-    feature_tracker::EQUALIZE = 0;
-    feature_tracker::FISHEYE = 0;
-    feature_tracker::WINDOW_SIZE = vins_estimator::WINDOW_SIZE;
-    feature_tracker::FOCAL_LENGTH = 460;
-    feature_tracker::PUB_THIS_FRAME = false;
-    trackerData[0].image_readout_s = readout;
-
-
-    if (type == RAD_TAN) {
-        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::PINHOLE, "",
-                                  cv::Size(feature_tracker::COL, feature_tracker::ROW));
-
-    } else if (type == FISH_EYE) {
-        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::KANNALA_BRANDT, "",
-                                   cv::Size(feature_tracker::COL, feature_tracker::ROW));
-    }
-    std::vector<double> cam_paras {d1, d2, d3, d4, fx, fy, alpha_x, alpha_y};
-    trackerData[0].m_camera->readParameters(cam_paras);
-    // LOG(WARNING) << "DEBUG camera info " << trackerData[0].m_camera->parametersToString();
-
 }
 
 System::~System() {
@@ -206,12 +145,12 @@ void System::subImageData(double dStampSec, Mat img) {
             }
         }
     }
-    if (estimator.solver_flag == Estimator::NON_LINEAR) {
+/*    if (estimator.solver_flag == Estimator::NON_LINEAR) {
         mo_buf_mtx_.lock();
         mo_img_buf_.push(feature_points);
         mo_buf_mtx_.unlock();
         mo_buf_con_.notify_one();
-    }
+    }*/
     if (PUB_THIS_FRAME) {
         //Features guarantee to have velocity now
         m_buf.lock();
@@ -245,26 +184,29 @@ void System::subImageData(double dStampSec, Mat img) {
         image.processing_time = 0;
         imageProcessCallback_(&image);
     }*/
-    auto f = [](uint64_t ts, cv::Mat mat, System *sys) {
-        cv::Mat show_img;
-        cv::cvtColor(mat, show_img, COLOR_GRAY2RGB);
-        for (unsigned int j = 0; j < sys->trackerData[0].cur_pts.size(); j++) {
-            double len = min(1.0, 1.0 * sys->trackerData[0].track_cnt[j] / vins_estimator::WINDOW_SIZE);
-            cv::circle(show_img, sys->trackerData[0].cur_pts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-        }
-        slam_processed_image image;
-        image.ts = ts;
-        image.image_data = show_img.data;
-        image.image_width = show_img.cols;
-        image.image_height = show_img.rows;
-        image.processing_time = 0;
-        pthread_mutex_lock(&sys->img_pro_ckb_mtx_);
-        sys->imageProcessCallback_(&image);
-        pthread_mutex_unlock(&sys->img_pro_ckb_mtx_);
-    };
-    uint64_t image_ts = dStampSec * 1e9;
-    std::thread t (f, std::ref(image_ts), img.clone(), this);
-    t.detach();
+
+    if (imageProcessCallback_) {
+        auto f = [](uint64_t ts, cv::Mat mat, System *sys) {
+            cv::Mat show_img;
+            cv::cvtColor(mat, show_img, COLOR_GRAY2RGB);
+            for (unsigned int j = 0; j < sys->trackerData[0].cur_pts.size(); j++) {
+                double len = min(1.0, 1.0 * sys->trackerData[0].track_cnt[j] / vins_estimator::WINDOW_SIZE);
+                cv::circle(show_img, sys->trackerData[0].cur_pts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+            }
+/*            slam_processed_image image;
+            image.ts = ts;
+            image.image_data = show_img.data;
+            image.image_width = show_img.cols;
+            image.image_height = show_img.rows;
+            image.processing_time = 0;*/
+            pthread_mutex_lock(&sys->img_pro_ckb_mtx_);
+            sys->imageProcessCallback_(show_img);
+            pthread_mutex_unlock(&sys->img_pro_ckb_mtx_);
+        };
+        uint64_t image_ts = dStampSec * 1e9;
+        std::thread t (f, std::ref(image_ts), img.clone(), this);
+        t.detach();
+    }
 }
 
 vector<pair<vector<ImuConstPtr>, ImgConstPtr>> System::getMeasurements() {
@@ -331,11 +273,11 @@ void System::subImuData(double dStampSec, const Eigen::Vector3d &vGyr, const Eig
     // double t = timer.lagFromStartSecond()*1e3;
     // LOG_IF(INFO, t > 1.5) << "subImuData cost " << t << " ms";
 
-    if (estimator.solver_flag == Estimator::NON_LINEAR) {
+/*    if (estimator.solver_flag == Estimator::NON_LINEAR) {
         mo_buf_mtx_.lock();
         mo_imu_buf_.push(imu_msg);
         mo_buf_mtx_.unlock();
-    }
+    }*/
 }
 
 // thread: visual-inertial odometry
@@ -416,9 +358,12 @@ void System::process() {
                 image[feature_id].emplace_back(camera_id, xyz_uv_velocity);
             }
             vins_estimator::TicToc t_processImage;
-            estimator.processImage(image, img_msg->header);
+            if (estimator.processImage(image, img_msg->header) ) {
+                bStart_backend = false; // This should terminate the thread.
+            }
 
             /// save or visualize result so far
+            /*
             if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR) {
                 /// display current pose
                 Vector3d p_wi;
@@ -428,7 +373,7 @@ void System::process() {
                 // updatePoseForDrawing(p_wi, q_wi);
 
                 /// display sliding window
-/*                pthread_mutex_lock(&pose_mtx);
+*//*                pthread_mutex_lock(&pose_mtx);
                 key_frames.clear();
                 for (int i = 0; i < vins_estimator::WINDOW_SIZE + 1; i++) {
                     q_wi = Quaterniond(estimator.Rs[i]);
@@ -438,7 +383,7 @@ void System::process() {
                     T_wi.block<3, 1>(0, 3) = p_wi;
                     key_frames.push_back(T_wi);
                 }
-                pthread_mutex_unlock(&pose_mtx);*/
+                pthread_mutex_unlock(&pose_mtx);*//*
                 /// save biases
                 LOG(INFO) << "current acc bias " << estimator.Bas[vins_estimator::WINDOW_SIZE].transpose()
                     << " norm: " << estimator.Bas[vins_estimator::WINDOW_SIZE].norm();
@@ -461,13 +406,13 @@ void System::process() {
                     LOG(INFO) << "current td: " << estimator.td;
                     estimator.td_save_.push_back(estimator.td);
                 }
-            }
+            }*/
         }
         m_estimator.unlock();
     }
 
     /// save vectors to file
-    std::ofstream fbias(vins_estimator::OUTPUT_PATH + "biases_save.csv", std::ios::out);
+/*    std::ofstream fbias(vins_estimator::OUTPUT_PATH + "biases_save.csv", std::ios::out);
     LOG(INFO) << "Saving biases to " << vins_estimator::OUTPUT_PATH + "biases_save.csv";
     for (auto &b : estimator.biases_save_) {
         fbias << b.transpose() << std::endl;
@@ -490,11 +435,15 @@ void System::process() {
             ftd << td << std::endl;
         }
         ftd.close();
-    }
+    }*/
 
     process_exited = true;
 }
 
+void System::register_image_process_callback(image_process_callback cbkfun) {
+    imageProcessCallback_ = cbkfun;
+}
+/*
 std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> System::getMoMeasurements() {
     std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> measurements;
 
@@ -524,10 +473,10 @@ std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> System::getMoMeasu
             return measurements;
         }
         if (imu_buf_copy.front()->header >= mo_img_buf_.front()->header + td) {
-            /*            LOG(WARNING) << "getMoMeasurements() throw image.";
+            *//*            LOG(WARNING) << "getMoMeasurements() throw image.";
                         LOG(INFO) << "ts_end " << to_string(ts_end) << " ";
                         LOG(INFO) << "imu_buf_copy.front()->header " << to_string(imu_buf_copy.front()->header) << " ";
-                        LOG(INFO) << "mo_img_buf_.front()->header + td " << to_string(mo_img_buf_.front()->header + td) << " ";*/
+                        LOG(INFO) << "mo_img_buf_.front()->header + td " << to_string(mo_img_buf_.front()->header + td) << " ";*//*
             mo_img_buf_.pop();
             continue;
         }
@@ -546,9 +495,9 @@ std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> System::getMoMeasu
 
         measurements.emplace_back(IMUs, img_msg);
     }
-}
+}*/
 
-
+/*
 void System::motionOnlyProcess() {
     while (mo_estimate_start) {
         std::vector<std::pair<std::vector<ImuConstPtr>, ImgConstPtr>> measurements;
@@ -587,10 +536,10 @@ void System::motionOnlyProcess() {
         poses.push_back(pose);
         Vs.push_back(Vb_end);
         for (auto &measurement : measurements) {
-            /*            for (auto & imu : measurement.first) {
+            *//*            for (auto & imu : measurement.first) {
                             LOG(INFO) << "imu ts " << to_string(imu->header) << " ";
                         }
-                        LOG(INFO) << "image ts + td " << to_string(measurement.second->header + td) << " ";*/
+                        LOG(INFO) << "image ts + td " << to_string(measurement.second->header + td) << " ";*//*
             Matrix3d R = last_R;
             Vector3d P = last_P, V = last_V;
             auto &imu0 = measurement.first.front();
@@ -703,17 +652,14 @@ void System::motionOnlyProcess() {
         // blocking version
         poseCallback_(&pose_out);
         // non-blocking version
-/*        auto f = [](slam_pose pose, System *sys) {
+*//*        auto f = [](slam_pose pose, System *sys) {
             sys->poseCallback_(&pose);
         };
         std::thread t(f, std::ref(pose_out), this);
-        t.detach();*/
+        t.detach();*//*
     }
 
     mo_estimate_exited = true;
-}
+}*/
 
-void System::registerInitialCallback(initial_result_callback cbk) {
-    estimator.initial_callback_ = cbk;
-}
 

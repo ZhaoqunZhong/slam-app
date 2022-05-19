@@ -38,18 +38,18 @@ add_library(${PROJECT_NAME}
     src/estimator.cpp
     src/feature_manager.cpp
     src/factor/pose_local_parameterization.cpp
-    src/factor/projection_factor.cpp
-    src/factor/projection_td_factor.cpp
-    src/factor/marginalization_factor.cpp
+#    src/factor/projection_factor.cpp
+#    src/factor/projection_td_factor.cpp
+#    src/factor/marginalization_factor.cpp
     src/utility/utility.cpp
 #    src/utility/visualization.cpp
 #    src/utility/CameraPoseVisualization.cpp
     src/utility/perf_monitor.cpp
-    src/initial/solve_5pts.cpp
-    src/initial/initial_aligment.cpp
+#    src/initial/solve_5pts.cpp
+#    src/initial/initial_aligment.cpp
     src/initial/initial_sfm.cpp
-    src/initial/initial_ex_rotation.cpp
-    src/motion_only_estimator.cpp
+#    src/initial/initial_ex_rotation.cpp
+#    src/motion_only_estimator.cpp
     )
 
 

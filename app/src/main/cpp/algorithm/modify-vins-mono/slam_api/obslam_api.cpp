@@ -14,7 +14,7 @@ void initial_callback(std::vector<double> &ts_, std::vector<Eigen::Vector3d> &Ps
                              std::vector<Eigen::Vector3d> &Vs_, std::vector<Eigen::Matrix3d> &Qs_, Eigen::Vector3d ba_,
                              Eigen::Vector3d g, Eigen::Vector3d bg_, std::vector<shared_ptr<IntegrationBase>> &pre_integrations_,
                              std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>> &features_, std::map<uint, Eigen::Vector3d> &world_pts_) {
-/*    LOG(WARNING) << "DEBUG initial_callback --------------" << "";
+    LOG(WARNING) << "DEBUG initial_callback --------------" << "";
     // LOG(WARNING) << "DEBUG world pts size " << world_pts_.size();
     std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>>::iterator feature_iter;
     for (feature_iter = features_.begin(); feature_iter != features_.end(); feature_iter++) {
@@ -27,13 +27,13 @@ void initial_callback(std::vector<double> &ts_, std::vector<Eigen::Vector3d> &Ps
         // LOG(WARNING) << "DEBUG world pt " << world_pts_[feature_iter->first].transpose();
         // LOG(WARNING) << "DEBUG  " << "----------------------------";
     }
-    for (auto & integration : pre_integrations_) {
+/*    for (auto & integration : pre_integrations_) {
         LOG(WARNING) << "DEBUG integration delta p " << integration->delta_p.transpose();
-    }
+    }*/
 
     LOG(WARNING) << "DEBUG gravity " << g.transpose();
-    LOG(WARNING) << "DEBUG ba " << ba_.transpose();
-    LOG(WARNING) << "DEBUG bg " << bg_.transpose();*/
+    LOG(WARNING) << "DEBUG ba " << ba_.transpose() << " norm " << ba_.norm();
+    LOG(WARNING) << "DEBUG bg " << bg_.transpose() << " norm " << bg_.norm();
 }
 
 void create_slam(SLAM_HANDLE *slam_handle, const char *volcabulary_path, const char *config_path)
@@ -78,13 +78,13 @@ int32_t start_slam(SLAM_HANDLE slam_handle)
 
 int32_t stop_slam(SLAM_HANDLE slam_handle)
 {
-    ((System*)slam_handle)->bStart_backend = false;
+/*    ((System*)slam_handle)->bStart_backend = false;
     ((System*)slam_handle)->con.notify_one();
     ((System*)slam_handle)->mo_estimate_start = false;
     ((System*)slam_handle)->mo_buf_con_.notify_one();
     while (!((System*)slam_handle)->process_exited || !((System*)slam_handle)->mo_estimate_exited) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    }*/
     return 1;
 }
 
@@ -127,7 +127,7 @@ void slam_register_status_callback(SLAM_HANDLE slam_handle, slam_status_callback
 }
 
 void slam_register_pose_callback(SLAM_HANDLE slam_handle, slam_pose_callback cbkfun) {
-    ((System*)slam_handle)->poseCallback_ = cbkfun;
+    // ((System*)slam_handle)->poseCallback_ = cbkfun;
 }
 
 void slam_register_image_process_callback(SLAM_HANDLE slam_handle, image_process_callback cbkfun) {
