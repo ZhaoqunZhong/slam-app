@@ -5,12 +5,139 @@
 using namespace std;
 using namespace cv;
 
-System::System(string sConfig_file_) : bStart_backend(true), process_exited(false) {
-    estimator.config_path_ = sConfig_file_;
-    vins_estimator::readParameters(sConfig_file_);
-    feature_tracker::readParameters(sConfig_file_);
-    trackerData[0].readIntrinsicParameter(sConfig_file_);
-    estimator.setParameter();
+System::System(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
+               cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
+               double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
+               Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
+               double gravity_norm, initial_result_callback cbk) : bStart_backend(true), process_exited(false) {
+    // estimator.config_path_ = sConfig_file_;
+    // vins_estimator::readParameters(sConfig_file_);
+    // feature_tracker::readParameters(sConfig_file_);
+    // trackerData[0].readIntrinsicParameter(sConfig_file_);
+    // estimator.setParameter();
+    // trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::PINHOLE, "",
+    //                                                                     cv::Size(640, 480));
+
+    vins_estimator::SOLVER_TIME = 0.04;
+    vins_estimator::NUM_ITERATIONS = 8;
+    vins_estimator::MIN_PARALLAX = 10.0;
+    vins_estimator::MIN_PARALLAX = vins_estimator::MIN_PARALLAX / vins_estimator::FOCAL_LENGTH;
+    vins_estimator::ACC_N = acc_n;
+    vins_estimator::ACC_W = acc_w;
+    vins_estimator::GYR_N = gyr_n;
+    vins_estimator::GYR_W = gyr_w;
+    vins_estimator::G.z() = gravity_norm;
+    vins_estimator::ROW = image_height;
+    vins_estimator::COL = image_width;
+    vins_estimator::ESTIMATE_EXTRINSIC = 0;
+    vins_estimator::RIC.push_back(Ric);
+    vins_estimator::TIC.push_back(tic);
+    vins_estimator::INIT_DEPTH = 5.0;
+    vins_estimator::TD = timeshift;
+    vins_estimator::ESTIMATE_TD = 1;
+    vins_estimator::ROLLING_SHUTTER = 1;
+    vins_estimator::TR = readout;
+    for (int i = 0; i < vins_estimator::NUM_OF_CAM; i++) {
+        estimator.tic[i] = TIC[i];
+        estimator.ric[i] = RIC[i];
+    }
+    // f_manager.setRic(ric);
+    ProjectionFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    ProjectionTdFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    estimator.td = vins_estimator::TD;
+
+    feature_tracker::MAX_CNT = 150;
+    feature_tracker::MIN_DIST = 30;
+    feature_tracker::ROW = image_height;
+    feature_tracker::COL = image_width;
+    feature_tracker::FREQ = 10;
+    feature_tracker::F_THRESHOLD = 1.0;
+    feature_tracker::EQUALIZE = 0;
+    feature_tracker::FISHEYE = 0;
+    feature_tracker::WINDOW_SIZE = vins_estimator::WINDOW_SIZE;
+    feature_tracker::FOCAL_LENGTH = 460;
+    feature_tracker::PUB_THIS_FRAME = false;
+    trackerData[0].image_readout_s = readout;
+
+
+    if (type == RAD_TAN) {
+        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::PINHOLE, "",
+                                                                            cv::Size(feature_tracker::COL, feature_tracker::ROW));
+
+    } else if (type == FISH_EYE) {
+        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::KANNALA_BRANDT, "",
+                                                                            cv::Size(feature_tracker::COL, feature_tracker::ROW));
+    }
+    std::vector<double> cam_paras {d1, d2, d3, d4, fx, fy, alpha_x, alpha_y};
+    trackerData[0].m_camera->readParameters(cam_paras);
+
+    estimator.initial_callback_ = cbk;
+
+    vi_th_ = std::thread(&System::process, this);
+    vi_th_.detach();
+    thread_initialized_ = true;
+}
+
+void System::addCalibrationParas(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
+                         cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
+                         double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
+                         Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
+                         double gravity_norm) {
+
+    vins_estimator::SOLVER_TIME = 0.04;
+    vins_estimator::NUM_ITERATIONS = 8;
+    vins_estimator::MIN_PARALLAX = 10.0;
+    vins_estimator::MIN_PARALLAX = vins_estimator::MIN_PARALLAX / vins_estimator::FOCAL_LENGTH;
+    vins_estimator::ACC_N = acc_n;
+    vins_estimator::ACC_W = acc_w;
+    vins_estimator::GYR_N = gyr_n;
+    vins_estimator::GYR_W = gyr_w;
+    vins_estimator::G.z() = gravity_norm;
+    vins_estimator::ROW = image_height;
+    vins_estimator::COL = image_width;
+    vins_estimator::ESTIMATE_EXTRINSIC = 0;
+    vins_estimator::RIC.push_back(Ric);
+    vins_estimator::TIC.push_back(tic);
+    vins_estimator::INIT_DEPTH = 5.0;
+    vins_estimator::TD = timeshift;
+    vins_estimator::ESTIMATE_TD = 1;
+    vins_estimator::ROLLING_SHUTTER = 1;
+    vins_estimator::TR = readout;
+    for (int i = 0; i < vins_estimator::NUM_OF_CAM; i++) {
+        estimator.tic[i] = TIC[i];
+        estimator.ric[i] = RIC[i];
+    }
+    // f_manager.setRic(ric);
+    ProjectionFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    ProjectionTdFactor::sqrt_info = vins_estimator::FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+    estimator.td = vins_estimator::TD;
+
+    feature_tracker::MAX_CNT = 150;
+    feature_tracker::MIN_DIST = 30;
+    feature_tracker::ROW = image_height;
+    feature_tracker::COL = image_width;
+    feature_tracker::FREQ = 10;
+    feature_tracker::F_THRESHOLD = 1.0;
+    feature_tracker::EQUALIZE = 0;
+    feature_tracker::FISHEYE = 0;
+    feature_tracker::WINDOW_SIZE = vins_estimator::WINDOW_SIZE;
+    feature_tracker::FOCAL_LENGTH = 460;
+    feature_tracker::PUB_THIS_FRAME = false;
+    trackerData[0].image_readout_s = readout;
+
+
+    if (type == RAD_TAN) {
+        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::PINHOLE, "",
+                                  cv::Size(feature_tracker::COL, feature_tracker::ROW));
+
+    } else if (type == FISH_EYE) {
+        trackerData[0].m_camera = CameraFactory::instance()->generateCamera(Camera::KANNALA_BRANDT, "",
+                                   cv::Size(feature_tracker::COL, feature_tracker::ROW));
+    }
+    std::vector<double> cam_paras {d1, d2, d3, d4, fx, fy, alpha_x, alpha_y};
+    trackerData[0].m_camera->readParameters(cam_paras);
+    // LOG(WARNING) << "DEBUG camera info " << trackerData[0].m_camera->parametersToString();
+
 }
 
 System::~System() {
@@ -27,6 +154,9 @@ System::~System() {
 }
 
 void System::subImageData(double dStampSec, Mat img) {
+    if (estimator.initial_finished_ || !thread_initialized_)
+        return;
+
     if (first_image_flag) {
         LOG(INFO) << "subImageData first_image_flag" << endl;
         first_image_flag = false;
@@ -51,6 +181,7 @@ void System::subImageData(double dStampSec, Mat img) {
     } else
         PUB_THIS_FRAME = false;
 
+    // LOG(WARNING) << "DEBUG camera info " << trackerData[0].m_camera->parametersToString();
     trackerData[0].readImage(img, dStampSec);
 
     shared_ptr<IMG_MSG> feature_points(new IMG_MSG());
@@ -178,6 +309,9 @@ vector<pair<vector<ImuConstPtr>, ImgConstPtr>> System::getMeasurements() {
 }
 
 void System::subImuData(double dStampSec, const Eigen::Vector3d &vGyr, const Eigen::Vector3d &vAcc) {
+    if (estimator.initial_finished_ || !thread_initialized_)
+        return;
+
     shared_ptr<IMU_MSG> imu_msg(new IMU_MSG());
     imu_msg->header = dStampSec;
     imu_msg->linear_acceleration = vAcc;
@@ -578,3 +712,8 @@ void System::motionOnlyProcess() {
 
     mo_estimate_exited = true;
 }
+
+void System::registerInitialCallback(initial_result_callback cbk) {
+    estimator.initial_callback_ = cbk;
+}
+

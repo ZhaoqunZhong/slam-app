@@ -298,6 +298,53 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             if (result) {
                 slam_status status = TRACKING;
                 statusCallback_(&status);
+                initial_finished_ = true;
+                /// construct initial callback
+                std::vector<double> ts_(std::begin(Headers), std::end(Headers));
+                std::vector<Vector3d> Ps_(std::begin(Ps), std::end(Ps));
+                std::vector<Vector3d> Vs_(std::begin(Vs), std::end(Vs));
+                std::vector<Matrix3d> Qs_(std::begin(Rs), std::end(Rs));
+                std::vector<shared_ptr<IntegrationBase>> pre_integrations_(std::begin(pre_integrations), std::end(pre_integrations));
+                std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>> features_;
+                std::map<uint, Eigen::Vector3d> world_pts_;
+                int f_cnt = 0;
+                for (auto &it_per_id : f_manager.feature)
+                {
+                    it_per_id.used_num = it_per_id.feature_per_frame.size();
+                    if (it_per_id.used_num >= 2 && it_per_id.estimated_depth > 0 && it_per_id.estimated_depth < 50) {
+                        f_cnt++;
+                        LOG(WARNING) << "DEBUG f_id " << it_per_id.feature_id << " estimated_depth " << it_per_id.estimated_depth
+                                    << " f_cnt " << f_cnt;
+                        std::vector<std::pair<uint, std::array<double, 6>>> feature_in_frames;
+                        uint frame_id = static_cast<uint>(it_per_id.start_frame);
+                        for (auto & ff : it_per_id.feature_per_frame) {
+                            std::array<double,6> cur_f;
+                            cur_f[0] = ff.uv.x();
+                            cur_f[1] = ff.uv.y();
+                            cur_f[2] = ff.point.x();
+                            cur_f[3] = ff.point.y();
+                            cur_f[4] = ff.velocity.x();
+                            cur_f[5] = ff.velocity.y();
+                            feature_in_frames.push_back(std::make_pair(frame_id, cur_f));
+
+                            // world pt
+                            if (frame_id == static_cast<uint>(it_per_id.start_frame)) {
+                                // LOG(WARNING) << "DEBUG frame_id " << frame_id << " start_frame " << static_cast<uint>(it_per_id.start_frame);
+                                Eigen::Vector3d frame_pt {cur_f[2] * it_per_id.estimated_depth,
+                                                          cur_f[3] * it_per_id.estimated_depth,
+                                                          it_per_id.estimated_depth};
+                                Eigen::Vector3d world_pt = Rs[frame_id] * ric[0] * frame_pt + (Rs[frame_id] * tic[0] + Ps[frame_id]);
+                                world_pts_[it_per_id.feature_id] = world_pt;
+                            }
+
+                            frame_id++;
+                        }
+                        features_[it_per_id.feature_id] = feature_in_frames;
+                    }
+                }
+                // LOG(WARNING) << "DEBUG world pts size " << world_pts_.size();
+                initial_callback_(ts_, Ps_, Vs_, Qs_, Bas[0], g, Bgs[0], pre_integrations_, features_, world_pts_);
+
                 LOG(WARNING) << "--- Initialization costs " << timer.lagFromStartSecond()*1e3 << " ms ---";
                 solver_flag = NON_LINEAR;
                 solveOdometry();
@@ -1133,12 +1180,13 @@ bool Estimator::myInitialStructure() {
     f_manager.clearDepth(dep);*/
 
     // Use BA result of feature depths instead of triangulating all over.
+    int ba_feature_cnt = 0;
     for (auto &it_per_id : f_manager.feature)
     {
-        if (sfm_tracked_points.find(it_per_id.feature_id) != sfm_tracked_points.end())
+        if (sfm_tracked_points.find(it_per_id.feature_id) != sfm_tracked_points.end()) {
             it_per_id.estimated_depth = sfm_tracked_points[it_per_id.feature_id];
-        // LOG(INFO) << "feature " << it_per_id.feature_id << " used num " << it_per_id.feature_per_frame.size()
-        //           << " depth " << it_per_id.estimated_depth;
+            LOG(WARNING) << "DEBUG ba feature " << ++ba_feature_cnt << " estimated_depth " << it_per_id.estimated_depth * s;
+        }
     }
 
     //triangulate on cam pose , no tic

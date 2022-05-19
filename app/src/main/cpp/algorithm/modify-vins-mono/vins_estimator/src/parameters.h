@@ -11,7 +11,7 @@
 namespace vins_estimator {
 
     const double FOCAL_LENGTH = 460.0;
-    const int WINDOW_SIZE = 10;
+    const int WINDOW_SIZE = 15;
     const int NUM_OF_CAM = 1;
     const int NUM_OF_F = 1500;
 //#define UNIT_SPHERE_ERROR

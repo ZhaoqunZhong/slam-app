@@ -25,6 +25,11 @@
 
 using namespace vins_estimator;
 
+typedef void (*initial_result_callback) (std::vector<double> &ts_, std::vector<Eigen::Vector3d> &Ps_,
+        std::vector<Eigen::Vector3d> &Vs_, std::vector<Eigen::Matrix3d> &Qs_, Eigen::Vector3d ba_,
+        Eigen::Vector3d g, Eigen::Vector3d bg_, std::vector<shared_ptr<IntegrationBase>> &pre_integrations_,
+        std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>> &features_, std::map<uint, Eigen::Vector3d> &world_pts_);
+
 class Estimator
 {
   public:
@@ -154,4 +159,8 @@ class Estimator
 
     //slam api
     slam_status_callback statusCallback_;
+
+    //initial module
+    bool initial_finished_;
+    initial_result_callback initial_callback_;
 };

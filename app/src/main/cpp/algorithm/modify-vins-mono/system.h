@@ -37,11 +37,21 @@ struct IMG_MSG {
 };
 typedef std::shared_ptr <IMG_MSG const > ImgConstPtr;
 
+enum cam_distortion_type
+{
+    RAD_TAN,
+    FISH_EYE
+};
+
 
 class System
 {
 public:
-    System(std::string sConfig_files);
+    System(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
+           cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
+           double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
+           Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
+           double gravity_norm, initial_result_callback cbk);
 
     ~System();
 
@@ -121,6 +131,17 @@ public:
     slam_pose_callback poseCallback_;
     image_process_callback imageProcessCallback_;
     pthread_mutex_t img_pro_ckb_mtx_ = PTHREAD_MUTEX_INITIALIZER;
+
+    // initial module
+    void registerInitialCallback(initial_result_callback cbk);
+
+    void addCalibrationParas(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
+                             cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
+                             double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
+                             Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
+                             double gravity_norm);
+    bool thread_initialized_ = false;
+
 };
 
 

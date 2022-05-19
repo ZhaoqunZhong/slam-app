@@ -350,7 +350,7 @@ void FeatureTracker::undistortedPoints()
                 double v_y = (cur_un_pts[i].y - it->second.y) / dt;
                 pts_velocity.push_back(cv::Point2f(v_x, v_y));
 
-                double feature_dt = (cur_pts[i].y / ROW) * image_readout_ns * 1e-9;
+                double feature_dt = (cur_pts[i].y / ROW) * image_readout_s;
                 double rs_x = cur_un_pts[i].x - v_x * feature_dt;
                 double rs_y = cur_un_pts[i].y - v_y * feature_dt;
                 cur_rs_un_pts_map.insert(make_pair(ids[i], cv::Point2f(rs_x, rs_y)));

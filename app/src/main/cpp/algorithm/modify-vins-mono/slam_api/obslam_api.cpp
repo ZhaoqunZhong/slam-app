@@ -10,10 +10,53 @@
 extern "C" {
 #endif
 
+void initial_callback(std::vector<double> &ts_, std::vector<Eigen::Vector3d> &Ps_,
+                             std::vector<Eigen::Vector3d> &Vs_, std::vector<Eigen::Matrix3d> &Qs_, Eigen::Vector3d ba_,
+                             Eigen::Vector3d g, Eigen::Vector3d bg_, std::vector<shared_ptr<IntegrationBase>> &pre_integrations_,
+                             std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>> &features_, std::map<uint, Eigen::Vector3d> &world_pts_) {
+/*    LOG(WARNING) << "DEBUG initial_callback --------------" << "";
+    // LOG(WARNING) << "DEBUG world pts size " << world_pts_.size();
+    std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>>::iterator feature_iter;
+    for (feature_iter = features_.begin(); feature_iter != features_.end(); feature_iter++) {
+        // LOG(WARNING) << "DEBUG f_id " << feature_iter->first;
+        for (auto & pair : feature_iter->second) {
+            // LOG(WARNING) << "DEBUG frame_id " << pair.first;
+            Eigen::Map<Eigen::Matrix<double, 1, 6>> print(pair.second.data());
+            // LOG(WARNING) << "DEBUG uv norm_xy v_xy " << print;
+        }
+        // LOG(WARNING) << "DEBUG world pt " << world_pts_[feature_iter->first].transpose();
+        // LOG(WARNING) << "DEBUG  " << "----------------------------";
+    }
+    for (auto & integration : pre_integrations_) {
+        LOG(WARNING) << "DEBUG integration delta p " << integration->delta_p.transpose();
+    }
+
+    LOG(WARNING) << "DEBUG gravity " << g.transpose();
+    LOG(WARNING) << "DEBUG ba " << ba_.transpose();
+    LOG(WARNING) << "DEBUG bg " << bg_.transpose();*/
+}
 
 void create_slam(SLAM_HANDLE *slam_handle, const char *volcabulary_path, const char *config_path)
 {
-    *slam_handle = new System(std::string(config_path));
+    Eigen::Matrix3d Ric;
+    Ric << 0.00160563, -0.99999611, -0.00228006,
+            -0.99999675, -0.00160111, -0.00198450,
+            0.00198084, 0.00228324, -0.99999543;
+
+    *slam_handle = new System(480, 640,
+                              493.92608247343867, 493.94340645062755, 317.7858212847334, 242.05056441352974,
+                              RAD_TAN, 0.063162160702101205, -0.090016428378378005, 0.00013963678674432469, 0.00071378641002039535,
+                              0.02, 0.012491, 0.001563, 0.003083, 0.0001,
+                              Ric, Eigen::Vector3d(0.01924729, 0.00160597, -0.00989951),
+                              0.02, 9.8, initial_callback);
+
+/*    ((System*)slam_handle)->addCalibrationParas(480, 640,
+                                                493.92608247343867, 493.94340645062755, 317.7858212847334, 242.05056441352974,
+                                                RAD_TAN, 0.063162160702101205, -0.090016428378378005, 0.00013963678674432469, 0.00071378641002039535,
+                                                0.02, 0.012491, 0.001563, 0.003083, 0.0001,
+                                                Ric, Eigen::Vector3d(0.01924729, 0.00160597, -0.00989951),
+                                                0.02, 9.8);*/
+    // ((System*)slam_handle)->registerInitialCallback(initial_callback);
 }
 
 void release_slam(SLAM_HANDLE slam_handle)
@@ -26,10 +69,10 @@ void release_slam(SLAM_HANDLE slam_handle)
 
 int32_t start_slam(SLAM_HANDLE slam_handle)
 {
-    ((System*)slam_handle)->vi_th_ = std::thread(&System::process, ((System*)slam_handle));
+/*    ((System*)slam_handle)->vi_th_ = std::thread(&System::process, ((System*)slam_handle));
     ((System*)slam_handle)->vi_th_.detach();
     ((System*)slam_handle)->mo_th_ = std::thread(&System::motionOnlyProcess, ((System*)slam_handle));
-    ((System*)slam_handle)->mo_th_.detach();
+    ((System*)slam_handle)->mo_th_.detach();*/
     return 1;
 }
 

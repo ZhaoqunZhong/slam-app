@@ -48,22 +48,20 @@ T readParam(ros::NodeHandle &n, std::string name)
         // std::string config_file;
         // config_file = readParam<std::string>(n, "config_file");
         cv::FileStorage fsSettings(config, cv::FileStorage::READ);
-        fsSettings["imu_topic"] >> IMU_TOPIC;
+        // fsSettings["imu_topic"] >> IMU_TOPIC;
 
         SOLVER_TIME = fsSettings["max_solver_time"];
         NUM_ITERATIONS = fsSettings["max_num_iterations"];
         MIN_PARALLAX = fsSettings["keyframe_parallax"];
         MIN_PARALLAX = MIN_PARALLAX / FOCAL_LENGTH;
 
-        fsSettings["output_path"] >> OUTPUT_PATH;
-        VINS_RESULT_PATH = OUTPUT_PATH + "vins_result_no_loop.csv";
-        LOG(INFO) << "result path " << VINS_RESULT_PATH << std::endl;
-
+        // fsSettings["output_path"] >> OUTPUT_PATH;
+        // VINS_RESULT_PATH = OUTPUT_PATH + "vins_result_no_loop.csv";
+        // LOG(INFO) << "result path " << VINS_RESULT_PATH << std::endl;
         // create folder if not exists
-        FileSystemHelper::createDirectoryIfNotExists(OUTPUT_PATH.c_str());
-
-        std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
-        fout.close();
+        // FileSystemHelper::createDirectoryIfNotExists(OUTPUT_PATH.c_str());
+        // std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
+        // fout.close();
 
         ACC_N = fsSettings["acc_n"];
         ACC_W = fsSettings["acc_w"];

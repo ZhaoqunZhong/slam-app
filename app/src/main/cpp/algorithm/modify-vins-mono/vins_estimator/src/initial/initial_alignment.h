@@ -140,12 +140,12 @@ public:
                 jacobian_abr_bg.block<3,3>(6,0) = 0.5 * dq_dbg;
             }
         }
-        LOG_EVERY_N(WARNING, 10) << "DEBUG Inertial only optimization iteration--------------";
-        LOG_EVERY_N(WARNING, 10) << "DEBUG acc bias iteration " << ba.transpose() << " norm: " << ba.norm();
-        LOG_EVERY_N(WARNING, 10) << "DEBUG gyr bias iteration " << bg.transpose() << " norm: " << bg.norm();
-        LOG_EVERY_N(WARNING, 10) << "DEBUG scale iteration " << s;
-        LOG_EVERY_N(WARNING, 10) << "DEBUG g iteration " << (Rg * g0_).transpose() << " norm: " << (Rg * g0_).norm();
-        LOG_EVERY_N(WARNING, 10) << "DEBUG residual iteration " << residual.norm();
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG Inertial only optimization iteration--------------";
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG acc bias iteration " << ba.transpose() << " norm: " << ba.norm();
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG gyr bias iteration " << bg.transpose() << " norm: " << bg.norm();
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG scale iteration " << s;
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG g iteration " << (Rg * g0_).transpose() << " norm: " << (Rg * g0_).norm();
+        LOG_EVERY_N(WARNING, vins_estimator::WINDOW_SIZE) << "DEBUG residual iteration " << residual.norm();
         return true;
     }
 
