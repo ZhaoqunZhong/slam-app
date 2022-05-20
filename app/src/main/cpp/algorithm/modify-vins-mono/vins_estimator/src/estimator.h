@@ -17,7 +17,7 @@
 #include <opencv2/core/eigen.hpp>
 
 
-#include "../../slam_api/obslam_api.h"
+// #include "../../slam_api/obslam_api.h"
 #include "utility/perf_monitor.h"
 
 using namespace vins_estimator;
@@ -155,7 +155,7 @@ class Estimator
     // MotionOnlyEstimator mo_estimator_;
 
     //slam api
-    slam_status_callback statusCallback_;
+    // slam_status_callback statusCallback_;
 
     //initial module
     bool initial_finished_;

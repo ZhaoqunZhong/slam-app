@@ -65,12 +65,11 @@ add_library(${PROJECT_NAME}
 
 #target_link_libraries(Calibration ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PUBLIC
-        ${jniLibs_DIR}/libopencv_java4.so
-        ${jniLibs_DIR}/libboost_filesystem-clang-mt-a64-1_74.a
-        ${jniLibs_DIR}/libceres.so
+        ${opencv_lib}
+        ${boost_filesystem_lib}
+        ${ceres_lib}
         )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-        ${CMAKE_SOURCE_DIR}/lib-includes
-#        ${CMAKE_SOURCE_DIR}/platform
+        ${lib_includes}
         ${CMAKE_CURRENT_SOURCE_DIR}/include)

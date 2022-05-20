@@ -35,9 +35,8 @@ add_library(feature_tracker
     )
 
 target_link_libraries(feature_tracker PUBLIC
-    ${jniLibs_DIR}/libopencv_java4.so)
+    ${opencv_lib})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-        ${CMAKE_SOURCE_DIR}/lib-includes
-#        ${CMAKE_SOURCE_DIR}/platform
+        ${lib_includes}
         ${CMAKE_CURRENT_SOURCE_DIR}/../camera_model/include)

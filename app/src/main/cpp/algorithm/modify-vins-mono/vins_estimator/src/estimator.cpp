@@ -296,8 +296,8 @@ bool Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
                 initial_timestamp = header;
             }
             if (result) {
-                slam_status status = TRACKING;
-                statusCallback_(&status);
+                // slam_status status = TRACKING;
+                // statusCallback_(&status);
                 initial_finished_ = true;
                 /// construct initial callback
                 std::vector<double> ts_(std::begin(Headers), std::end(Headers));

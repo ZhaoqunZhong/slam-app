@@ -123,16 +123,16 @@ int32_t slam_add_gyro(SLAM_HANDLE slam_handle, uint64_t timestamp,
 }
 
 void slam_register_status_callback(SLAM_HANDLE slam_handle, slam_status_callback cbkfun) {
-    ((System*)slam_handle)->estimator.statusCallback_ = cbkfun;
+    // ((System*)slam_handle)->estimator.statusCallback_ = cbkfun;
 }
 
 void slam_register_pose_callback(SLAM_HANDLE slam_handle, slam_pose_callback cbkfun) {
     // ((System*)slam_handle)->poseCallback_ = cbkfun;
 }
 
-void slam_register_image_process_callback(SLAM_HANDLE slam_handle, image_process_callback cbkfun) {
-    ((System*)slam_handle)->imageProcessCallback_ = cbkfun;
-}
+/*void slam_register_image_process_callback(SLAM_HANDLE slam_handle, image_process_callback cbkfun) {
+    // ((System*)slam_handle)->imageProcessCallback_ = cbkfun;
+}*/
 
 void slam_register_keyFrame_callback(SLAM_HANDLE slam_handle, keyFame_callback cbkfun) {
 

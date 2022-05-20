@@ -308,9 +308,9 @@ void AlgorithmInterface::start() {
 
     create_time = slam_timer.getCurrentTimeSecond();
     create_slam(&slam_, nullptr, config.c_str());
-    slam_register_image_process_callback(slam_, previewCallback);
+    // slam_register_image_process_callback(slam_, previewCallback);
     // slam_register_pose_callback(slam_, poseCallback);
-    slam_register_status_callback(slam_, statusCallback);
+    // slam_register_status_callback(slam_, statusCallback);
     start_slam(slam_);
     bootup_time = slam_timer.getCurrentTimeSecond();
     LOG(INFO) << "slam bootup costs " << bootup_time - create_time;

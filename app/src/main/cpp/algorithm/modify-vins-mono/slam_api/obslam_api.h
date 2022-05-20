@@ -74,8 +74,8 @@ struct slam_processed_image {
     uint8_t *image_data;
     float processing_time;
 };
-typedef void (*image_process_callback)(slam_processed_image *image);
-void slam_register_image_process_callback(SLAM_HANDLE slam_handle, image_process_callback cbkfun);
+// typedef void (*image_process_callback)(slam_processed_image *image);
+// void slam_register_image_process_callback(SLAM_HANDLE slam_handle, image_process_callback cbkfun);
 
 
 /*

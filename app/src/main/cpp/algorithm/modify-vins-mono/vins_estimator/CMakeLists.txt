@@ -54,10 +54,9 @@ add_library(${PROJECT_NAME}
 
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-        ${jniLibs_DIR}/libopencv_java4.so
-        ${jniLibs_DIR}/libceres.so)
+        ${opencv_lib}
+        ${ceres_lib})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-        ${CMAKE_SOURCE_DIR}/lib-includes
-#        ${CMAKE_SOURCE_DIR}/platform
+        ${lib_includes}
         )

@@ -2,7 +2,6 @@
 //debug
 // #include "native_debug.h"
 
-using namespace Initializer;
 using namespace std;
 using namespace cv;
 
@@ -200,6 +199,7 @@ void System::subImageData(double dStampSec, Mat img) {
             image.image_height = show_img.rows;
             image.processing_time = 0;*/
             pthread_mutex_lock(&sys->img_pro_ckb_mtx_);
+            // sys->imageProcessCallback_(&image);
             sys->imageProcessCallback_(show_img);
             pthread_mutex_unlock(&sys->img_pro_ckb_mtx_);
         };
@@ -359,7 +359,7 @@ void System::process() {
             }
             vins_estimator::TicToc t_processImage;
             if (estimator.processImage(image, img_msg->header) ) {
-                bStart_backend = false; // This should terminate the thread.
+                bStart_backend = false; // This should terminate the thread from inside.
             }
 
             /// save or visualize result so far
