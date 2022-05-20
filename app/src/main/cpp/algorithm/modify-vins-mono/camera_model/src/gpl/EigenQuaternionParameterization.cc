@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 bool

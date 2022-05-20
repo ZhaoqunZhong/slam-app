@@ -1,7 +1,7 @@
 #include "parameters.h"
 #include "glog/logging.h"
 
-namespace vins_estimator {
+namespace Initializer::vins_estimator {
 
     double INIT_DEPTH;
     double MIN_PARALLAX;

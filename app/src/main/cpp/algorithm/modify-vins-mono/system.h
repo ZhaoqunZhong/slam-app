@@ -17,7 +17,7 @@
 #include "feature_tracker/src/parameters.h"
 #include "slam_api/obslam_api.h"
 
-
+namespace Initializer {
 /// Msg definition for sensor queue
     struct IMU_MSG {
         double header;
@@ -139,6 +139,6 @@
         pthread_mutex_t img_pro_ckb_mtx_ = PTHREAD_MUTEX_INITIALIZER;
     };
 
-
+}
 
 #endif //VIO_SYSTEM_H

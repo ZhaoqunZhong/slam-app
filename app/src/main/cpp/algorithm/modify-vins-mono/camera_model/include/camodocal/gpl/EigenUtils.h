@@ -6,7 +6,7 @@
 #include "ceres/rotation.h"
 #include "camodocal/gpl/gpl.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 // Returns the 3D cross product skew symmetric matrix of a given 3D vector

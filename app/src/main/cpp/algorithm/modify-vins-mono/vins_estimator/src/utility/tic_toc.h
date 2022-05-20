@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <chrono>
 
-namespace vins_estimator {
+namespace Initializer::vins_estimator {
     class TicToc
     {
     public:

@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <chrono>
 
-namespace feature_tracker {
+namespace Initializer::feature_tracker {
     class TicToc
     {
     public:

@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 #include <stdint.h>
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 class Transform

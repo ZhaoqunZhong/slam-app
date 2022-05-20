@@ -11,7 +11,7 @@
 
 #include "camodocal/gpl/gpl.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 EquidistantCamera::Parameters::Parameters()

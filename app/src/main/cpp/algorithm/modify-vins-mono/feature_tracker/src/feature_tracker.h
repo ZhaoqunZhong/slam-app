@@ -16,56 +16,63 @@
 #include "parameters.h"
 #include "tic_toc.h"
 
-using namespace std;
-using namespace camodocal;
-using namespace Eigen;
-using namespace feature_tracker;
+namespace Initializer {
 
-bool inBorder(const cv::Point2f &pt);
+    using namespace std;
+    using namespace camodocal;
+    using namespace Eigen;
+    using namespace feature_tracker;
 
-void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
-void reduceVector(vector<int> &v, vector<uchar> status);
+    bool inBorder(const cv::Point2f &pt);
 
-class FeatureTracker
-{
-  public:
-    FeatureTracker();
+    void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
 
-    void readImage(const cv::Mat _img,double _cur_time);
+    void reduceVector(vector<int> &v, vector<uchar> status);
 
-    void setMask();
-    void mySetMask();
+    class FeatureTracker {
+    public:
+        FeatureTracker();
 
-    void addPoints();
+        void readImage(const cv::Mat _img, double _cur_time);
 
-    bool updateID(unsigned int i);
+        void setMask();
 
-    void readIntrinsicParameter(const string &calib_file);
+        void mySetMask();
 
-    // void showUndistortion(const string &name);
+        void addPoints();
 
-    void rejectWithF();
+        bool updateID(unsigned int i);
 
-    void undistortedPoints();
+        void readIntrinsicParameter(const string &calib_file);
 
-    cv::Mat mask;
-    cv::Mat fisheye_mask;
-    cv::Mat /*prev_img,*/ cur_img, forw_img;
-    vector<cv::Point2f> n_pts;
-    vector<cv::Point2f> /*prev_pts, */cur_pts, forw_pts;
-    vector<cv::Point2f> /*prev_un_pts,*/ cur_un_pts;
-    vector<cv::Point2f> pts_velocity;
-    vector<int> ids;
-    vector<int> track_cnt;
-    map<int, cv::Point2f> cur_un_pts_map;
-    map<int, cv::Point2f> prev_un_pts_map;
-    camodocal::CameraPtr m_camera;
-    double cur_time;
-    double prev_time;
+        // void showUndistortion(const string &name);
 
-    static int n_id;
+        void rejectWithF();
 
-    double image_readout_s = 0.02;
-    void rollingShutter_F_reject();
-    map<int, cv::Point2f> cur_rs_un_pts_map, prev_rs_un_pts_map;
-};
+        void undistortedPoints();
+
+        cv::Mat mask;
+        cv::Mat fisheye_mask;
+        cv::Mat /*prev_img,*/ cur_img, forw_img;
+        vector<cv::Point2f> n_pts;
+        vector<cv::Point2f> /*prev_pts, */cur_pts, forw_pts;
+        vector<cv::Point2f> /*prev_un_pts,*/ cur_un_pts;
+        vector<cv::Point2f> pts_velocity;
+        vector<int> ids;
+        vector<int> track_cnt;
+        map<int, cv::Point2f> cur_un_pts_map;
+        map<int, cv::Point2f> prev_un_pts_map;
+        CameraPtr m_camera;
+        double cur_time;
+        double prev_time;
+
+        static int n_id;
+
+        double image_readout_s = 0.02;
+
+        void rollingShutter_F_reject();
+
+        map<int, cv::Point2f> cur_rs_un_pts_map, prev_rs_un_pts_map;
+    };
+
+}

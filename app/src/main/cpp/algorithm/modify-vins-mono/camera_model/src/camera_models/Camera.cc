@@ -3,7 +3,7 @@
 
 #include <opencv2/calib3d/calib3d.hpp>
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 Camera::Parameters::Parameters(ModelType modelType)

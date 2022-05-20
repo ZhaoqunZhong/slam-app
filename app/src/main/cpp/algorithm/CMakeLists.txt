@@ -6,6 +6,7 @@ project("algorithm_interface")
 add_library(${PROJECT_NAME} SHARED
         algorithm_interface.cpp
         ${CMAKE_SOURCE_DIR}/platform/native_debug.cpp
+        ${CMAKE_SOURCE_DIR}/platform/perf_monitor.cpp
         )
 
 add_subdirectory(modify-vins-mono)

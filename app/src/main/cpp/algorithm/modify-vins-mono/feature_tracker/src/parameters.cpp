@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-namespace feature_tracker {
+namespace Initializer::feature_tracker {
     std::string IMAGE_TOPIC;
     std::string IMU_TOPIC;
     std::vector<std::string> CAM_NAMES;

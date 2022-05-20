@@ -1,6 +1,6 @@
 #include <camodocal/sparse_graph/Transform.h>
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 Transform::Transform()

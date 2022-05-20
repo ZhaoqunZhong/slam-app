@@ -12,7 +12,7 @@ extern "C" {
 
 void initial_callback(std::vector<double> &ts_, std::vector<Eigen::Vector3d> &Ps_,
                              std::vector<Eigen::Vector3d> &Vs_, std::vector<Eigen::Matrix3d> &Qs_, Eigen::Vector3d ba_,
-                             Eigen::Vector3d g, Eigen::Vector3d bg_, std::vector<shared_ptr<IntegrationBase>> &pre_integrations_,
+                             Eigen::Vector3d g, Eigen::Vector3d bg_, std::vector<shared_ptr<Initializer::IntegrationBase>> &pre_integrations_,
                              std::map<uint, std::vector<std::pair<uint, std::array<double, 6>>>> &features_, std::map<uint, Eigen::Vector3d> &world_pts_) {
     LOG(WARNING) << "DEBUG initial_callback --------------" << "";
     // LOG(WARNING) << "DEBUG world pts size " << world_pts_.size();
@@ -43,9 +43,9 @@ void create_slam(SLAM_HANDLE *slam_handle, const char *volcabulary_path, const c
             -0.99999675, -0.00160111, -0.00198450,
             0.00198084, 0.00228324, -0.99999543;
 
-    *slam_handle = new System(480, 640,
+    *slam_handle = new Initializer::System(480, 640,
                               493.92608247343867, 493.94340645062755, 317.7858212847334, 242.05056441352974,
-                              RAD_TAN, 0.063162160702101205, -0.090016428378378005, 0.00013963678674432469, 0.00071378641002039535,
+                              Initializer::RAD_TAN, 0.063162160702101205, -0.090016428378378005, 0.00013963678674432469, 0.00071378641002039535,
                               0.02, 0.012491, 0.001563, 0.003083, 0.0001,
                               Ric, Eigen::Vector3d(0.01924729, 0.00160597, -0.00989951),
                               0.02, 9.8, initial_callback);
@@ -63,7 +63,7 @@ void release_slam(SLAM_HANDLE slam_handle)
 {
     if(slam_handle)
     {
-        delete (System*)slam_handle;
+        delete (Initializer::System*)slam_handle;
     }
 }
 
@@ -93,7 +93,7 @@ int32_t slam_add_image(SLAM_HANDLE slam_handle, uint64_t timestamp,
 {
     double imgTimeStamp = timestamp/1e9;
     cv::Mat img(height, width, CV_8UC1, data);
-    ((System*)slam_handle)->subImageData(imgTimeStamp, img.clone());
+    ((Initializer::System*)slam_handle)->subImageData(imgTimeStamp, img.clone());
     return 1;
 }
 
@@ -104,7 +104,7 @@ int32_t slam_add_imu(SLAM_HANDLE slam_handle, uint64_t timestamp,
     double imuTimeStamp = timestamp/1e9;
     Eigen::Vector3d gyr{angular_velocity_x, angular_velocity_y, angular_velocity_z};
     Eigen::Vector3d acc{linear_acceleration_x, linear_acceleration_y, linear_acceleration_z};
-    ((System*)slam_handle)->subImuData(imuTimeStamp, gyr, acc);
+    ((Initializer::System*)slam_handle)->subImuData(imuTimeStamp, gyr, acc);
     return 1;
 }
 

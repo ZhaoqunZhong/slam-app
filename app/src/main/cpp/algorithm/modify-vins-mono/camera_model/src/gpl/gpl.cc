@@ -44,7 +44,7 @@ const double WGS84_ECCSQ = 0.00669437999013;
 #define fminf(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 double hypot3(double x, double y, double z)

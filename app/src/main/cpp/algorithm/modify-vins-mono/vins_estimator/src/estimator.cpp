@@ -2,6 +2,7 @@
 #include "glog/logging.h"
 #include <memory>
 
+namespace Initializer {
 
 Estimator::Estimator() : f_manager{pre_integrations} {
     // LOG(INFO) << "init begins ";
@@ -2023,3 +2024,4 @@ void Estimator::setReloFrame(double _frame_stamp, int _frame_index, vector<Vecto
     }
 }*/
 
+}

@@ -8,7 +8,7 @@
 #include <opencv2/core/eigen.hpp>
 #include <fstream>
 
-namespace vins_estimator {
+namespace Initializer::vins_estimator {
 
     const double FOCAL_LENGTH = 460.0;
     const int WINDOW_SIZE = 15;

@@ -6,7 +6,7 @@
 #include "camodocal/camera_models/PinholeCamera.h"
 #include "camodocal/camera_models/ScaramuzzaCamera.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 template<typename T>

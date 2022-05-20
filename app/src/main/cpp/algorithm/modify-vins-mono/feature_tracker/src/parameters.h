@@ -2,7 +2,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 
-namespace feature_tracker {
+namespace Initializer::feature_tracker {
     extern int ROW;
     extern int COL;
     extern int FOCAL_LENGTH;

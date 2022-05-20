@@ -6,7 +6,7 @@
 
 #include "camodocal/camera_models/Camera.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 class CameraFactory

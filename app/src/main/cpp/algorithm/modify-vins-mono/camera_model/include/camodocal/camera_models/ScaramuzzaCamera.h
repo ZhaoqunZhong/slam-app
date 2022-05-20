@@ -7,7 +7,7 @@
 #include "ceres/rotation.h"
 #include "Camera.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 #define SCARAMUZZA_POLY_SIZE 5

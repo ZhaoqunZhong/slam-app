@@ -24,48 +24,57 @@
 /******************************************************************
  * Helper class for a performance monitoring and get current tick time
  */
+namespace Initializer {
 
-class PerfMonitor {
-public:
-    PerfMonitor();
-    virtual ~PerfMonitor();
-    void update();
-    inline int getFPS() { return static_cast<int>(current_FPS_); }
-    void reset();
-private:
-    static const int kNumSamples = 30;
-    float current_FPS_;
-    time_t tv_last_sec_;
-    double last_tick_;
-    int32_t tickindex_;
-    double ticksum_;
-    double ticklist_[kNumSamples];
-    double UpdateTick(double current_tick);
-    int count_sample_ = 0;
-};
+    class PerfMonitor {
+    public:
+        PerfMonitor();
+
+        virtual ~PerfMonitor();
+
+        void update();
+
+        inline int getFPS() { return static_cast<int>(current_FPS_); }
+
+        void reset();
+
+    private:
+        static const int kNumSamples = 30;
+        float current_FPS_;
+        time_t tv_last_sec_;
+        double last_tick_;
+        int32_t tickindex_;
+        double ticksum_;
+        double ticklist_[kNumSamples];
+
+        double UpdateTick(double current_tick);
+
+        int count_sample_ = 0;
+    };
 
 
-class TimeLagMeasurer {
-public:
-    TimeLagMeasurer(int clock_macro = CLOCK_BOOTTIME);
-    ~TimeLagMeasurer(){};
+    class TimeLagMeasurer {
+    public:
+        TimeLagMeasurer(int clock_macro = CLOCK_BOOTTIME);
 
-    double lagFromStartSecond();
+        ~TimeLagMeasurer() {};
 
-    double lagFromLastSecond();
+        double lagFromStartSecond();
 
-    double getCurrentTimeSecond();
+        double lagFromLastSecond();
 
-    void restart();
+        double getCurrentTimeSecond();
 
-private:
-    int clock_;
-    struct timespec ts_start_;
-    double ts_start_s_;
-    struct timespec ts_cur_;
-    double ts_cur_s_;
-    double ts_last_s_;
-};
+        void restart();
 
+    private:
+        int clock_;
+        struct timespec ts_start_;
+        double ts_start_s_;
+        struct timespec ts_cur_;
+        double ts_cur_s_;
+        double ts_last_s_;
+    };
+}
 
 #endif /* PERFMONITOR_H_ */

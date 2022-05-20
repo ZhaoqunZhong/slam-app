@@ -43,7 +43,7 @@ Eigen::VectorXd polyfit(Eigen::VectorXd& xVec, Eigen::VectorXd& yVec, int poly_o
     return x;
 }
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 OCAMCamera::Parameters::Parameters()

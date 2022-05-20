@@ -5,7 +5,7 @@
 #include <cmath>
 #include <opencv2/core/core.hpp>
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 template<class T>

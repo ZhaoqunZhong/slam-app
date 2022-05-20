@@ -7,7 +7,7 @@
 #include "ceres/rotation.h"
 #include "Camera.h"
 
-namespace camodocal
+namespace Initializer::camodocal
 {
 
 /**
