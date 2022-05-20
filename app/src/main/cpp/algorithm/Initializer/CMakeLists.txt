@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.10.2)
 
-project(vins_mono)
+project(Initializer)
 
 set(opencv_lib "${jniLibs_DIR}/libopencv_java4.so")
 set(cere_lib "${jniLibs_DIR}/libceres.so")

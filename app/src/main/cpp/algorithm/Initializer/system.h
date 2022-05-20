@@ -18,7 +18,7 @@
 #include "slam_api/obslam_api.h"
 
 namespace Initializer {
-/// Msg definition for sensor queue
+
     struct IMU_MSG {
         double header;
         Eigen::Vector3d linear_acceleration;
@@ -46,10 +46,8 @@ namespace Initializer {
 
     class System {
     public:
-        System(uint image_height, uint image_width, double fx, double fy, double alpha_x,
-               double alpha_y,
-               cam_distortion_type type, double d1, double d2, double d3,
-               double d4,//distortion paras
+        System(uint image_height, uint image_width, double fx, double fy, double alpha_x, double alpha_y,
+               cam_distortion_type type, double d1, double d2, double d3, double d4,//distortion paras
                double readout, double acc_n, double acc_w, double gyr_n, double gyr_w,
                Eigen::Matrix3d Ric, Eigen::Vector3d tic, double timeshift,
                double gravity_norm, initial_result_callback cbk);

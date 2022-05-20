@@ -9,7 +9,7 @@ add_library(${PROJECT_NAME} SHARED
         ${CMAKE_SOURCE_DIR}/platform/perf_monitor.cpp
         )
 
-add_subdirectory(modify-vins-mono)
+add_subdirectory(Initializer)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
 #        ${jniLibs_DIR}/libopencv_java4.so
@@ -17,7 +17,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         ${jniLibs_DIR}/libglog.so
 #        ${jniLibs_DIR}/libceres.so
         ${jniLibs_DIR}/librosbag.so
-        vins_mono
+        Initializer
         )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

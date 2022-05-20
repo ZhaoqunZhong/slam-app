@@ -11,7 +11,7 @@
 #include "RosbagStorage/rosbag/view.h"
 #include "cv_bridge_simple.h"
 #include "algorithm_interface.h"
-#include "modify-vins-mono/slam_api/obslam_api.h"
+#include "Initializer/slam_api/obslam_api.h"
 
 #define IS_SEPARATE_IMU
 // #define GLOG_TO_FILE
