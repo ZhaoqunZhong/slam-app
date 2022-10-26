@@ -24,6 +24,7 @@ using namespace ob_slam::geometry_msgs;
 #define DEFAULT_TOPIC_IMAGE "/cam0/image_raw"
 #define DEFAULT_TOPIC_ACCEL "/acc0"
 #define DEFAULT_TOPIC_GYRO  "/gyr0"
+#define DEFAULT_TOPIC_MAG  "/mag0"
 
 class RosbagPacker {
 
@@ -39,6 +40,7 @@ public:
     void exit();
     void writeAccel(uint64_t timeStamp, double *accel);
     void writeGyro(uint64_t timeStamp, double *gyro);
+    void writeMagnetic(uint64_t timeStamp, double *mag);
     void writeImu(uint64_t timeStamp, double *imu);
     void writeImage(uint64_t timeStamp, const unsigned char *buf_ptr, int size, int width, int height);
 
@@ -55,12 +57,14 @@ public:
 
     queue<ob_slam::geometry_msgs::Vector3Stamped> accel_;
     queue<ob_slam::geometry_msgs::Vector3Stamped> gyro_;
+    queue<ob_slam::geometry_msgs::Vector3Stamped> mag_;
     queue<ob_slam::sensor_msgs::Imu> imu_;
     //queue<sensor_msgs::CompressedImage> image_;
     queue<ob_slam::sensor_msgs::Image> image_;
 
     mutex accelMutex_;
     mutex gyroMutex_;
+    mutex magMutex_;
     mutex imuMutex_;
     mutex imageMutex_;
 };

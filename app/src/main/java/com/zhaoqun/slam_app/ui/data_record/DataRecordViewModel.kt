@@ -38,6 +38,8 @@ class DataRecordViewModel : ViewModel() {
 
     val _gyr_freq = MutableLiveData<String>()
 
+    val _mag_freq = MutableLiveData<String>()
+
     val _data_size = MutableLiveData<String>()
 }
 

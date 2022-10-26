@@ -62,6 +62,11 @@ void* gyroThreadWrapper(void *ptr) {
     classptr->runGyro();
     return nullptr;
 }
+void* magThreadWrapper(void *ptr) {
+    ImuPublisher* classptr = (ImuPublisher*)ptr;
+    classptr->runMagnetic();
+    return nullptr;
+}
 
 void ImuPublisher::init() {
     if (use_direct_channel_) {
@@ -85,6 +90,14 @@ void ImuPublisher::init() {
         ASSERT(gyro_channel_ > 0, "gyro create direct channel failed.");
         int gyro_cf_dr = ASensorManager_configureDirectReport(sensorManager_, gyro_, gyro_channel_, direct_report_level_);
         ASSERT(gyro_cf_dr > 0, "gyro config direct report failed.");
+        // Magnetic field
+        int mag_hb_allo = AHardwareBuffer_allocate(&bufferDesc, &mag_buffer_);
+        ASSERT(mag_hb_allo == 0, "magnetic allocate hardware buffer failed.");
+        mag_channel_ = ASensorManager_createHardwareBufferDirectChannel(sensorManager_, mag_buffer_, 104);
+        ASSERT(mag_channel_ > 0, "magnetic create direct channel failed.");
+        int mag_cf_dr = ASensorManager_configureDirectReport(sensorManager_, magnetic_, mag_channel_, direct_report_level_);
+        ASSERT(mag_cf_dr > 0, "magnetic config direct report failed.");
+
     } else {
 /*        std::string file_name = "sdcard/orbbec-vio-data/config.yaml";
         cv::FileStorage fs(file_name, cv::FileStorage::READ);
@@ -103,6 +116,8 @@ void ImuPublisher::init() {
         ASensorEventQueue_setEventRate(sensorEventQueue_,accelerometer_,SENSOR_REFRESH_PERIOD_US);
         ASensorEventQueue_enableSensor(sensorEventQueue_,gyro_);
         ASensorEventQueue_setEventRate(sensorEventQueue_,gyro_,SENSOR_REFRESH_PERIOD_US);
+        ASensorEventQueue_enableSensor(sensorEventQueue_,magnetic_);
+        ASensorEventQueue_setEventRate(sensorEventQueue_,magnetic_,SENSOR_REFRESH_PERIOD_US);
     }
 
     cur_state = WAIT_FOR_MSG;
@@ -133,6 +148,7 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
     sensorManager_ = ASensorManager_getInstanceForPackage("com.zhaoqun.slam_app");
     accelerometer_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED);
     gyro_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED);
+    magnetic_ = ASensorManager_getDefaultSensor(sensorManager_, ASENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED);
 /*	ASensorList sensor_list = nullptr;
 	int sensor_count = ASensorManager_getSensorList(sensorManager_, &sensor_list);
 	LOGI("Found %d sensors.", sensor_count);
@@ -153,6 +169,7 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
         init();
         pthread_create(&acc_thread_, nullptr, accThreadWrapper, this);
         pthread_create(&gyro_thread_, nullptr, gyroThreadWrapper, this);
+        pthread_create(&mag_thread_, nullptr, magThreadWrapper, this);
     } else
         pthread_create(&looper_thread_, nullptr, looperThreadWrapper, this);
 }
@@ -168,8 +185,12 @@ void ImuPublisher::stop() {
     if(use_direct_channel_) {
         pthread_join(acc_thread_, nullptr);
         pthread_join(gyro_thread_, nullptr);
+        pthread_join(mag_thread_, nullptr);
     } else
         pthread_join(looper_thread_, nullptr);
+
+    acc_cache_.clear();
+    gyro_cache_.clear();
 }
 
 void ImuPublisher::run() {
@@ -192,7 +213,8 @@ void ImuPublisher::run() {
 
 		ASensorEvent event;
 		while (ASensorEventQueue_getEvents(sensorEventQueue_, &event, 1) > 0) {
-			if (event.type != ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED && event.type != ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED)
+			if (event.type != ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED && event.type != ASENSOR_TYPE_GYROSCOPE_UNCALIBRATED
+                && event.type != ASENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED)
 				continue;
 			if (event.type == ASENSOR_TYPE_ACCELEROMETER_UNCALIBRATED) {
 				acc_msg accMsg;
@@ -238,12 +260,28 @@ void ImuPublisher::run() {
                     constructImuInterpolateAcc();
                 }
 			}
+            else if (event.type == ASENSOR_TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                mag_msg magMsg;
+                magMsg.ts = event.timestamp;
+                if (magMsg.ts - last_mag_ts_ < 1e5) {
+                    LOG(WARNING) << "magnetic timestamp error";
+                    LOG(INFO) << "current mag ts " << magMsg.ts;
+                    LOG(INFO) << "last mag ts " << last_mag_ts_;
+                    continue;
+                }
+                last_mag_ts_ = magMsg.ts;
+                magMsg.x = event.uncalibrated_magnetic.x_uncalib;
+                magMsg.y = event.uncalibrated_magnetic.y_uncalib;
+                magMsg.z = event.uncalibrated_magnetic.z_uncalib;
+                mag_callback_(magMsg);
+            }
 //			LOGI("acc gyr cache sizes %d, %d", acc_cache_.size(), gyro_cache_.size());
 		}
 	}
 
     ASensorEventQueue_disableSensor(sensorEventQueue_, accelerometer_);
     ASensorEventQueue_disableSensor(sensorEventQueue_, gyro_);
+    ASensorEventQueue_disableSensor(sensorEventQueue_, magnetic_);
     ASensorManager_destroyEventQueue(sensorManager_, sensorEventQueue_);
 
 }
@@ -356,7 +394,45 @@ void ImuPublisher::runGyro() {
     ASensorManager_destroyDirectChannel(sensorManager_, gyro_channel_);
     AHardwareBuffer_release(gyro_buffer_);
 }
+void ImuPublisher::runMagnetic() {
+    while (imu_publish_on_) {
+        // The sleep here is because the sonsor reporting mode is continuous, not on_change.
+        // Means you will get the same message multiple times until it is replaced by new message.
+        useconds_t thread_sleep_time = static_cast<useconds_t>(100); //0.1ms
+        usleep(thread_sleep_time);
 
+        void *mag_mem;
+        int mag_l_rs = AHardwareBuffer_lock(mag_buffer_, AHARDWAREBUFFER_USAGE_CPU_READ_MASK, -1, NULL, &mag_mem);
+        // ASSERT(mag_l_rs == 0, "mag lock hardware buffer failed.");
+        if (mag_l_rs != 0) {
+            LOG(WARNING) << "mag lock hardware buffer failed.";
+            continue;
+        }
+//        LOGI("mag timestamp %f", *(static_cast<int64_t*>(mag_mem) + 2)/1e5);
+
+        auto data = static_cast<float16_t*>(mag_mem) + 12;
+        AUncalibratedEvent *mag_data = reinterpret_cast<AUncalibratedEvent*>(data);
+//        LOGI("mag data %f, %f, %f", mag_data->x_uncalib, mag_data->y_uncalib, mag_data->z_uncalib);
+        mag_msg magMsg;
+        magMsg.ts = *(static_cast<int64_t*>(mag_mem) + 2);
+        if (magMsg.ts - last_mag_ts_ < 1e5) {
+            continue;
+        }
+        last_mag_ts_ = magMsg.ts;
+        magMsg.x = mag_data->x_uncalib;
+        magMsg.y = mag_data->y_uncalib;
+        magMsg.z = mag_data->z_uncalib;
+        mag_callback_(magMsg);
+
+        int mag_ul_rs = AHardwareBuffer_unlock(mag_buffer_, NULL);
+        // ASSERT(mag_ul_rs == 0, "mag unlock hardware buffer failed.");
+        if (mag_ul_rs != 0)
+            LOG(WARNING) << "mag unlock hardware buffer failed.";
+    }
+
+    ASensorManager_destroyDirectChannel(sensorManager_, mag_channel_);
+    AHardwareBuffer_release(mag_buffer_);
+}
 
 void ImuPublisher::constructImuInterpolateAcc() {
     switch (cur_state) {

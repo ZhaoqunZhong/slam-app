@@ -24,6 +24,7 @@ void RosbagPacker::reset() {
     exit_ = false;
     while (!accel_.empty()) accel_.pop();
     while (!gyro_.empty()) gyro_.pop();
+    while (!mag_.empty()) mag_.pop();
     while (!imu_.empty()) imu_.pop();
     while (!image_.empty()) image_.pop();
 }
@@ -77,6 +78,19 @@ void RosbagPacker::writeGyro(uint64_t timeStamp, double *value) {
     gyroMutex_.lock();
     gyro_.push(gyroMsg);
     gyroMutex_.unlock();
+}
+
+void RosbagPacker::writeMagnetic(uint64_t timeStamp, double *value) {
+
+    geometry_msgs::Vector3Stamped magMsg;
+    magMsg.header.stamp.fromNSec(timeStamp);
+    magMsg.vector.x = value[0];
+    magMsg.vector.y = value[1];
+    magMsg.vector.z = value[2];
+
+    magMutex_.lock();
+    mag_.push(magMsg);
+    magMutex_.unlock();
 }
 
 void RosbagPacker::writeImu(uint64_t timeStamp, double *value) {

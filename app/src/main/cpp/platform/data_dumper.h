@@ -19,6 +19,7 @@ public:
     void dumpImuData(imu_msg & imuMsg);
     void dumpAccData(acc_msg & accMsg);
     void dumpGyroData(gyr_msg & gyroMsg);
+    void dumpMagData(mag_msg & magMsg);
     void DumpThreadFunction();
     uint64_t getCurrentDataSize();
     void lockFolderSize();
@@ -34,10 +35,12 @@ private:
     bool record_imu_, record_cam_;
     std::queue<acc_msg> acc_queue_;
     std::queue<gyr_msg> gyr_queue_;
+    std::queue<mag_msg> mag_queue_;
     std::queue<imu_msg> imu_queue_;
     std::queue<rgb_msg> image_queue_;
     pthread_mutex_t acc_mtx_ = PTHREAD_MUTEX_INITIALIZER, gyr_mtx_ = PTHREAD_MUTEX_INITIALIZER,
-    imu_mtx_ = PTHREAD_MUTEX_INITIALIZER, image_mtx_ = PTHREAD_MUTEX_INITIALIZER;
+    imu_mtx_ = PTHREAD_MUTEX_INITIALIZER, image_mtx_ = PTHREAD_MUTEX_INITIALIZER,
+    mag_mtx_ = PTHREAD_MUTEX_INITIALIZER;
     std::atomic<bool> folder_size_lock_ = true;
     pthread_t main_th_;
     bool started_ = false;

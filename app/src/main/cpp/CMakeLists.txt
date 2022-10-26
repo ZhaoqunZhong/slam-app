@@ -41,6 +41,7 @@ target_include_directories(data_record PRIVATE
 
 
 #---------------------------vio------------------------------------
+#[[
 add_subdirectory(algorithm)
 
 add_library(slam SHARED
@@ -68,3 +69,4 @@ target_link_libraries(slam PRIVATE
 target_include_directories(slam PRIVATE
         lib-includes
         )
+]]

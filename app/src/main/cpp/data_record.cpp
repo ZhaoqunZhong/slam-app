@@ -18,7 +18,7 @@
 #include "nlohmann/json.hpp"
 
 DataDumper dataDumper;
-PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu;
+PerfMonitor perf_cam, perf_acc, perf_gyr, perf_imu, perf_mag;
 
 void rgbCallback(rgb_msg &msg) {
    dataDumper.dumpRgbImage(msg);
@@ -46,8 +46,14 @@ void gyrCallback(gyr_msg &msg) {
     perf_gyr.update();
 }
 
+void magCallback(mag_msg &msg) {
+    dataDumper.dumpMagData(msg);
+
+    perf_mag.update();
+}
+
 CamPublisher camPublisher(rgbCallback, nullptr);
-ImuPublisher imuPublisher(imuCallback, accCallback, gyrCallback);
+ImuPublisher imuPublisher(imuCallback, accCallback, gyrCallback, magCallback);
 ImagePreviewer previewer;
 
 extern "C"
@@ -194,6 +200,11 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getGyrFps(JNIEnv *env, jobject thiz) {
     return perf_gyr.getFPS();
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getMagFps(JNIEnv *env, jobject thiz) {
+    return perf_mag.getFPS();
 }
 extern "C"
 JNIEXPORT jint JNICALL

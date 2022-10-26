@@ -51,6 +51,21 @@ void DataDumper::dumpGyroData(gyr_msg &gyroMsg) {
     }
 }
 
+void DataDumper::dumpMagData(mag_msg &magMsg) {
+    if (!dump_open_ || !record_imu_)
+        return;
+
+    pthread_mutex_lock(&mag_mtx_);
+    mag_queue_.push(magMsg);
+    pthread_mutex_unlock(&mag_mtx_);
+
+    ///rosbag
+    if (record_rosbag_) {
+        double mag[3] {magMsg.x, magMsg.y, magMsg.z};
+        bag_packer_.writeMagnetic(magMsg.ts, mag);
+    }
+}
+
 void DataDumper::dumpImuData(imu_msg & imuMsg) {
     if (!dump_open_ || !record_imu_)
         return;
@@ -131,6 +146,18 @@ void DataDumper::stop() {
     LOG(INFO) << "DataDumper stopped.";
     dump_open_ = false;
     pthread_join(main_th_, nullptr);
+    
+    // Empty containers.
+    std::queue<acc_msg> acc_empty;
+    acc_queue_.swap(acc_empty);
+    std::queue<gyr_msg> gyr_empty;
+    gyr_queue_.swap(gyr_empty);
+    std::queue<mag_msg> mag_empty;
+    mag_queue_.swap(mag_empty);
+    std::queue<imu_msg> imu_empty;
+    imu_queue_.swap(imu_empty);
+    std::queue<rgb_msg> image_empty;
+    image_queue_.swap(image_empty);
 
     ///rosbag
     if (record_rosbag_)
@@ -150,7 +177,8 @@ void* threadImgSave(void *paras_ptr) {
 };
 
 void DataDumper::DumpThreadFunction() {
-    while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !imu_queue_.empty() || !image_queue_.empty()) {
+    while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !mag_queue_.empty() ||
+            !imu_queue_.empty() || !image_queue_.empty()) {
 /*        useconds_t thread_sleep_time = static_cast<useconds_t>(10);
         usleep(thread_sleep_time);*/
 
@@ -168,6 +196,13 @@ void DataDumper::DumpThreadFunction() {
             std::swap(gyr_queue_, gyr_buf);
         }
         pthread_mutex_unlock(&gyr_mtx_);
+
+        std::queue<mag_msg> mag_buf;
+        pthread_mutex_lock(&mag_mtx_);
+        if (!mag_queue_.empty()) {
+            std::swap(mag_queue_, mag_buf);
+        }
+        pthread_mutex_unlock(&mag_mtx_);
 
         std::queue<imu_msg> imu_buf;
         pthread_mutex_lock(&imu_mtx_);
@@ -193,6 +228,13 @@ void DataDumper::DumpThreadFunction() {
                 gyrf << msg.ts << "," << msg.rx << "," <<msg.ry << "," <<msg.rz << std::endl;
             }
             gyrf.close();
+
+            std::ofstream magf(dump_path_ + "mag" + imu_file_format_, std::ios::app);
+            while (!mag_buf.empty()) {
+                mag_msg msg = mag_buf.front();
+                mag_buf.pop();
+                magf << msg.ts << "," << msg.x << "," <<msg.y << "," <<msg.z << std::endl;
+            }
 
             if (sync_acc_gyr_) {
                 std::ofstream imuf(dump_path_ + "imu" + imu_file_format_, std::ios::app);
@@ -291,6 +333,18 @@ void DataDumper::DumpThreadFunction() {
                 }
             }
             bag_packer_.gyroMutex_.unlock();
+
+            bag_packer_.magMutex_.lock();
+            while (!bag_packer_.mag_.empty()) {
+                try{
+                    geometry_msgs::Vector3Stamped msg = bag_packer_.mag_.front();
+                    bag_packer_.bag_.write(DEFAULT_TOPIC_MAG, msg.header.stamp, msg);
+                    bag_packer_.mag_.pop();
+                }catch(BagException e){
+
+                }
+            }
+            bag_packer_.magMutex_.unlock();
 
             bag_packer_.imageMutex_.lock();
             while (!bag_packer_.image_.empty()) {
