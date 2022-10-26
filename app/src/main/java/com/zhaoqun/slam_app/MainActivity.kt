@@ -72,12 +72,12 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.nav_home, /*R.id.nav_gallery, */R.id.nav_slideshow, R.id.nav_about
+                R.id.nav_home, /*R.id.nav_gallery, R.id.nav_slideshow,*/ R.id.nav_about
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-
+/*
         if (isInternetAvailable(applicationContext)) {
             fsync = FileSynchronizer(applicationContext,
 //                "${filesDir}/",
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             fsync.run()
         } else
             Log.w("slam_app", "No internet connection, file sync won't work.")
-
+*/
         //Android11存储
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             var intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
@@ -99,20 +99,18 @@ class MainActivity : AppCompatActivity() {
     fun isInternetAvailable(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (connectivityManager != null) {
-            val capabilities =
-                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-            if (capabilities != null) {
-                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_CELLULAR")
-                    return true
-                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_WIFI")
-                    return true
-                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                    Log.i("slam_app", "NetworkCapabilities.TRANSPORT_ETHERNET")
-                    return true
-                }
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        if (capabilities != null) {
+            if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                Log.i("slam_app", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                return true
+            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                Log.i("slam_app", "NetworkCapabilities.TRANSPORT_WIFI")
+                return true
+            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                Log.i("slam_app", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                return true
             }
         }
         return false
@@ -168,7 +166,7 @@ class MainActivity : AppCompatActivity() {
         }
     }*/
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+/*    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             var intent = Intent(Intent.ACTION_MAIN);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -177,7 +175,7 @@ class MainActivity : AppCompatActivity() {
             return true;
         }
         return super.onKeyDown(keyCode, event)
-    }
+    }*/
 
 
     companion object {
