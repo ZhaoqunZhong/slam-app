@@ -64,6 +64,8 @@ Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_startDumpJNI(JNIEn
     perf_cam.reset();
     perf_acc.reset();
     perf_gyr.reset();
+    perf_imu.reset();
+    perf_mag.reset();
 
     std::string config_string = env->GetStringUTFChars(config, nullptr);
     LOG(INFO) << "record config string " << config_string;
@@ -200,6 +202,11 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getGyrFps(JNIEnv *env, jobject thiz) {
     return perf_gyr.getFPS();
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_zhaoqun_slam_1app_ui_data_1record_DataRecordFragment_getImuFps(JNIEnv *env, jobject thiz) {
+    return perf_imu.getFPS();
 }
 extern "C"
 JNIEXPORT jint JNICALL

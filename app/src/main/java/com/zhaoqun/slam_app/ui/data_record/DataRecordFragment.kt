@@ -136,6 +136,7 @@ class DataRecordFragment : Fragment() {
         dataRecordViewModel._cam_freq.observe(viewLifecycleOwner, {binding.camFps.text = it})
         dataRecordViewModel._acc_freq.observe(viewLifecycleOwner, {binding.accFps.text = it})
         dataRecordViewModel._gyr_freq.observe(viewLifecycleOwner, {binding.gyrFps.text = it})
+        dataRecordViewModel._imu_freq.observe(viewLifecycleOwner, {binding.imuFpsDisplay.text = it})
         dataRecordViewModel._mag_freq.observe(viewLifecycleOwner, {binding.magFps.text = it})
         dataRecordViewModel._data_size.observe(viewLifecycleOwner, {binding.dataSize.text = it})
 
@@ -215,6 +216,7 @@ class DataRecordFragment : Fragment() {
                 dataRecordViewModel._cam_freq.postValue(getCamFps().toString() + "hz")
                 dataRecordViewModel._acc_freq.postValue(getAccFps().toString() + "hz")
                 dataRecordViewModel._gyr_freq.postValue(getGyrFps().toString() + "hz")
+                dataRecordViewModel._imu_freq.postValue(getImuFps().toString() + "hz")
                 dataRecordViewModel._mag_freq.postValue(getMagFps().toString() + "hz")
                 dataRecordViewModel._data_size.postValue(getDataSize().toString() + "MB")
             }
@@ -236,6 +238,7 @@ class DataRecordFragment : Fragment() {
     external fun getCamFps() : Int
     external fun getAccFps() : Int
     external fun getGyrFps() : Int
+    external fun getImuFps() : Int
     external fun getMagFps() : Int
     external fun getDataSize() : Int
 

@@ -164,7 +164,7 @@ void DataDumper::stop() {
         bag_packer_.close();
 }
 
-struct imgSaveParas {
+/*struct imgSaveParas {
     imgSaveParas(std::string name, cv::Mat mat) : img_name(name), mat_to_save(mat) {};
     std::string img_name;
     cv::Mat mat_to_save;
@@ -174,7 +174,7 @@ void* threadImgSave(void *paras_ptr) {
     cv::imwrite(paras->img_name, paras->mat_to_save);
     if (paras_ptr)
         delete paras_ptr;
-};
+};*/
 
 void DataDumper::DumpThreadFunction() {
     while (dump_open_ || !acc_queue_.empty() || !gyr_queue_.empty() || !mag_queue_.empty() ||

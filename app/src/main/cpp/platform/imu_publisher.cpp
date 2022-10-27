@@ -313,7 +313,8 @@ void ImuPublisher::runAcc() {
 //        LOGI("acc timestamp %f", *(static_cast<int64_t*>(acc_mem) + 2)/1e5);
 
         auto data = static_cast<float16_t*>(acc_mem) + 12;
-        ASensorVector *acc_data = reinterpret_cast<ASensorVector*>(data);
+//        ASensorVector *acc_data = reinterpret_cast<ASensorVector*>(data);
+        AUncalibratedEvent *acc_data = reinterpret_cast<AUncalibratedEvent*>(data);
 //        LOGI("acc data %f, %f, %f", acc_data->x, acc_data->y, acc_data->z);
         acc_msg accMsg;
         accMsg.ts = *(static_cast<int64_t*>(acc_mem) + 2);
@@ -322,9 +323,9 @@ void ImuPublisher::runAcc() {
         }
 
         last_acc_ts_ = accMsg.ts;
-        accMsg.ax = acc_data->x;
-        accMsg.ay = acc_data->y;
-        accMsg.az = acc_data->z;
+        accMsg.ax = acc_data->x_uncalib;
+        accMsg.ay = acc_data->y_uncalib;
+        accMsg.az = acc_data->z_uncalib;
 /*        if (!checkAccValue(accMsg))
             continue;*/
         acc_callback_(accMsg);

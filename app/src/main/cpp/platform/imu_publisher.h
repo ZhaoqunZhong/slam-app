@@ -7,9 +7,6 @@
 #include "perf_monitor.h"
 #include "native_debug.h"
 
-// #define USE_DIRECT_REPORT
-// #define ASSEMBLE_IMU
-
 struct acc_msg {
 	uint64_t ts;
 	double ax;
