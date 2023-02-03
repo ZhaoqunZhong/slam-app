@@ -161,7 +161,11 @@ void ImuPublisher::start(int imu_freq, bool sync_acc_gyr) {
     LOGI("acc direct channel hardware buffer %s", acc_dc_hw ? "supported" : "not supported");
     bool acc_dc_sm = ASensor_isDirectChannelTypeSupported(accelerometer_, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY);
     LOGI("acc direct channel shared memory %s", acc_dc_sm ? "supported" : "not supported");
-    if (!acc_dc_hw && !acc_dc_sm)
+    bool mag_dc_hw = ASensor_isDirectChannelTypeSupported(magnetic_, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER);
+    bool mag_dc_sm = ASensor_isDirectChannelTypeSupported(magnetic_, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY);
+    if (!acc_dc_hw || !acc_dc_sm)
+        use_direct_channel_ = false;
+    if (!mag_dc_hw || !mag_dc_sm)
         use_direct_channel_ = false;
 
     imu_publish_on_ = true;
